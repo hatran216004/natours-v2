@@ -147,6 +147,15 @@ tourSchema.pre(/^find/, function (next) {
   next();
 });
 
+tourSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'guides',
+    select:
+      '-failedAttempts -lockUntil -passwordChangedAt -passwordResetToken -passwordResetExpires'
+  });
+  next();
+});
+
 tourSchema.post(/^find/, function (documents, next) {
   // console.log(`This query took ${Date.now() - this.startQuery} milliseconds`);
   next();
