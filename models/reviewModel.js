@@ -35,9 +35,18 @@ const reviewSchema = new mongoose.Schema(
 );
 
 reviewSchema.pre(/^find/, function (next) {
-  this.populate('user', 'name photo').populate('tour', 'name');
+  // console.log('review query middleware');
+  // this.populate('user', 'name photo').populate({
+  //   path: 'tour',
+  //   select: 'name'
+  // });
+  this.populate('user', 'name photo');
   next();
 });
 
 const Review = mongoose.model('Review', reviewSchema);
 module.exports = Review;
+
+/*
+  Trường tour, user trong Review hoạt động giống như khóa ngoại tham chiếu đến model Tour, User
+*/

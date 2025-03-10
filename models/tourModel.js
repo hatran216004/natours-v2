@@ -124,6 +124,13 @@ tourSchema.virtual('durationWeeks').get(function () {
   return Math.ceil(this.duration / 7);
 });
 
+// VIRTUAL POPULATE: không muốn lưu trực tiếp _id của doc liên quan trong db, nhưng vẫn muốn lấy dữ liệu từ bảng khác.
+tourSchema.virtual('reviews', {
+  ref: 'Review', // Tên model tham chiếu
+  localField: '_id', // Khóa chính của Tour
+  foreignField: 'tour' // Trường trong ReviewSchema tham chiếu đến Tour
+});
+
 // DOCUMENT MIDDLEWARE
 tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
@@ -179,4 +186,5 @@ Có 4 loại middleware trong mongoose: document, query, aggregate, model middle
 - Document middleware: Chỉ chạy trên .save() và .create()  (this là document đang được xử lý)
 - Query middleware: chạy trước hoặc sau khi 1 query được thực thi (this là 1 query object)
 - Aggregate middleware: chạy trước hoặc sau khi 1 Aggregate xảy ra (this là 1 aggregation object)
+- Dùng virtual populate thay vì child referencing (lưu mảng reviews trên tour) vì tránh tạo ra mảng vô hạn
 */
