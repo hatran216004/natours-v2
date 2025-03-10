@@ -153,8 +153,7 @@ tourSchema.pre(/^find/, function (next) {
 tourSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'guides',
-    select:
-      '-failedAttempts -lockUntil -passwordChangedAt -passwordResetToken -passwordResetExpires'
+    select: 'name email photo role'
   });
   next();
 });

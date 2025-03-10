@@ -4,12 +4,6 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router(); // tạo ra 1 middleware router(tourRouter)
 
-// middleware chỉ chạy trên tourRouter và khi có params
-// router.param('id', (req, res, next, val) => {
-//   checkID logic...
-//   next();
-// });
-
 // Điền trước query params vào url
 router
   .route('/top-5-cheap')
@@ -33,5 +27,11 @@ router
     authMiddleware.restrictTo('admin', 'lead-guide'),
     tourController.deleteTour
   );
+
+// middleware chỉ chạy trên tourRouter khi có params
+// router.param('id', (req, res, next, val) => {
+//   checkID logic...
+//   next();
+// });
 
 module.exports = router;

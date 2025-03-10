@@ -4,6 +4,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const Tour = require('../../models/tourModel');
 const User = require('../../models/userModel');
+const Review = require('../../models/reviewModel');
 
 const app = express();
 
@@ -11,7 +12,7 @@ dotenv.config({ path: './config.env' });
 
 const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`));
 const users = JSON.parse(fs.readFileSync(`${__dirname}/users.json`));
-// const reviews = JSON.parse(fs.readFileSync(`${__dirname}/reviews.json`));
+const reviews = JSON.parse(fs.readFileSync(`${__dirname}/reviews.json`));
 
 const DB = process.env.DATABASE.replace(
   '<PASSWORD>',
@@ -24,10 +25,11 @@ mongoose.connect(DB).then(() => {
 
 const importData = async () => {
   try {
-    await Tour.create(tours);
-    await User.create(users, {
-      validateBeforeSave: false
-    });
+    // await Tour.create(tours);
+    // await User.create(users, {
+    //   validateBeforeSave: false
+    // });
+    await Review.create(reviews);
     console.log('Data successfully loaded 😊');
     process.exit();
   } catch (error) {
