@@ -9,8 +9,11 @@ const tourSchema = new Schema(
       type: String,
       required: [true, 'A tour must have a name'],
       unique: true,
-      minlength: [10, 'A tour name mus have more or equals than 10 charactors'],
-      maxlength: [40, 'A tour name mus have less or equals than 40 charactors']
+      minlength: [
+        10,
+        'A tour name must have more or equals than 10 charactors'
+      ],
+      maxlength: [40, 'A tour name must have less or equals than 40 charactors']
     },
     slug: String,
     secretTour: {
@@ -40,8 +43,8 @@ const tourSchema = new Schema(
     ratingsAverage: {
       type: Number,
       default: 4.5,
-      min: [1, 'A rating mus be above 1.0'],
-      max: [5, 'A rating mus be below 5.0'],
+      min: [1, 'A rating must be above 1.0'],
+      max: [5, 'A rating must be below 5.0'],
       set: (value) => Math.round(value * 10) / 10 // 4.666667 * 10 => 46.66667 => 47 / 10 = 4.7
     },
     ratingsQuantity: {
@@ -62,12 +65,12 @@ const tourSchema = new Schema(
       type: String,
       required: [true, 'A tour must have a summary'],
       trim: true,
-      maxlength: [1000, 'A summary mus be below 1000 characters']
+      maxlength: [1000, 'A summary must be below 1000 characters']
     },
     description: {
       type: String,
       trim: true,
-      maxlength: [1000, 'A summary mus be below 1000 characters']
+      maxlength: [1000, 'A summary must be below 1000 characters']
     },
     imageCover: {
       type: String,
