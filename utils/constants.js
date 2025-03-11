@@ -1,4 +1,4 @@
-exports.PAGE_LIMIT = 10;
+exports.PAGE_LIMIT = 100;
 exports.BAD_REQUEST = 400;
 exports.UNAUTHORIZED = 401; // Người dùng chưa đăng nhập, Token bị thiếu, hết hạn hoặc không hợp lệ
 exports.FORBIDDEN = 403; //  Người dùng đã xác thực nhưng không có quyền truy cập

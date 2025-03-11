@@ -3,7 +3,10 @@ const ApiFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 
 exports.getAllReviews = catchAsync(async (req, res, next) => {
-  const features = new ApiFeatures(Review.find(), req.query)
+  let filter = {};
+  if (req.params.tourId) filter = { tour: req.params.tourId };
+
+  const features = new ApiFeatures(Review.find(filter), req.query)
     .filter()
     .sort()
     .limitFields()
@@ -21,8 +24,8 @@ exports.getAllReviews = catchAsync(async (req, res, next) => {
 });
 
 exports.createReview = catchAsync(async (req, res, next) => {
-  if (!req.body.tour) req.body.tour = req.params.id;
-  if (!req.body.user) req.body.user = req.user.id;
+  req.body.tour = !req.body.tour && req.params.tourId;
+  req.body.user = !req.body.user && req.user.id;
 
   const newReview = await Review.create(req.body);
 

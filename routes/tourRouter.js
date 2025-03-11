@@ -5,7 +5,7 @@ const reviewRouter = require('./reviewRouter');
 
 const router = express.Router(); // tạo ra 1 middleware router(tourRouter)
 // Moute router con (reviewRouter) vào router cha tourRouter
-router.use('/:id/reviews', reviewRouter);
+router.use('/:tourId/reviews', reviewRouter);
 
 // Điền trước query params vào url
 router
