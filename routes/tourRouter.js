@@ -1,17 +1,20 @@
 const express = require('express');
 const tourController = require('../controllers/tourController');
 const authMiddleware = require('../middleware/authMiddleware');
+const reviewRouter = require('./reviewRouter');
 
 const router = express.Router(); // tạo ra 1 middleware router(tourRouter)
+// Moute router con (reviewRouter) vào router cha tourRouter
+router.use('/:id/reviews', reviewRouter);
 
 // Điền trước query params vào url
 router
   .route('/top-5-cheap')
   .get(tourController.aliasTopTours, tourController.getAllTours);
 // --
-router.route('/search/:key').get(tourController.searchTours);
-router.route('/tour-stats').get(tourController.getTourStats);
-router.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
+router.get('/search/:key', tourController.searchTours);
+router.get('/tour-stats', tourController.getTourStats);
+router.get('/monthly-plan/:year', tourController.getMonthlyPlan);
 
 router
   .route('/')

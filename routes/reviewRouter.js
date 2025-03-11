@@ -2,7 +2,8 @@ const express = require('express');
 const reviewController = require('../controllers/reviewController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-const router = express.Router();
+// merge params với router cha(tourRouter) trong nested route
+const router = express.Router({ mergeParams: true });
 
 router
   .route('/')
@@ -12,5 +13,7 @@ router
     authMiddleware.restrictTo('user'),
     reviewController.createReview
   );
+
+router.route('/:reviewId').get();
 
 module.exports = router;

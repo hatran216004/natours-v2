@@ -124,7 +124,7 @@ tourSchema.virtual('durationWeeks').get(function () {
   return Math.ceil(this.duration / 7);
 });
 
-// VIRTUAL POPULATE: không muốn lưu trực tiếp _id của doc liên quan trong db, nhưng vẫn muốn lấy dữ liệu từ bảng khác.
+// VIRTUAL POPULATE: không muốn lưu trực tiếp _id của doc liên quan trong db, nhưng vẫn muốn lấy dữ liệu từ bảng khác
 tourSchema.virtual('reviews', {
   ref: 'Review', // Tên model tham chiếu
   localField: '_id', // Khóa chính của Tour
