@@ -3,6 +3,7 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { filterObj } = require('../utils/helpers');
 const { BAD_REQUEST } = require('../utils/constants');
+const { deleteOne } = require('./handlerFactory');
 
 exports.getAllUsers = catchAsync(async (req, res) => {
   const users = await User.find();
@@ -72,9 +73,4 @@ exports.updateUser = (req, res) => {
   });
 };
 
-exports.deleteUser = (req, res) => {
-  res.status(500).json({
-    status: 'fail',
-    message: 'The route not yet defined '
-  });
-};
+exports.deleteUser = deleteOne(User);

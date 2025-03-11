@@ -3,6 +3,7 @@ const ApiFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { NOT_FOUND } = require('../utils/constants');
+const { deleteOne, updateOne, createOne } = require('./handlerFactory');
 
 // ?limit=5&sort=-ratingsAverage,price: lọc ra 5 tour có ratingsAverage cao nhất, nếu bằng nhau thì ưu tiên tour có giá thấp hơn
 exports.aliasTopTours = (req, res, next) => {
@@ -20,7 +21,10 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
     .paginate();
 
   // Excute
-  const tours = await features.query;
+  const [tours, totalDocuments] = await Promise.all([
+    features.query,
+    Tour.countDocuments()
+  ]);
 
   res.status(200).json({
     status: 'success',
@@ -28,6 +32,9 @@ exports.getAllTours = catchAsync(async (req, res, next) => {
     data: {
       result: tours.length,
       tours
+    },
+    pagination: {
+      totalDocuments
     }
   });
 });
@@ -46,47 +53,9 @@ exports.getTour = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.create(req.body);
-
-  res.status(201).json({
-    status: 'created success',
-    data: {
-      tour
-    }
-  });
-});
-
-exports.updateTour = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const tour = await Tour.findByIdAndUpdate(id, req.body, {
-    new: true, // trả về doc mới sau khi update
-    runValidators: true
-  });
-
-  if (!tour)
-    return next(new AppError('No document found with that ID', NOT_FOUND));
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour
-    }
-  });
-});
-
-exports.deleteTour = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const tour = await Tour.findByIdAndDelete(id);
-
-  if (!tour)
-    return next(new AppError('No document found with that ID', NOT_FOUND));
-
-  res.status(204).json({
-    status: 'success',
-    data: null
-  });
-});
+exports.createTour = createOne(Tour);
+exports.updateTour = updateOne(Tour);
+exports.deleteTour = deleteOne(Tour);
 
 exports.searchTours = catchAsync(async (req, res, next) => {
   const { key } = req.params;
@@ -103,13 +72,18 @@ exports.searchTours = catchAsync(async (req, res, next) => {
   };
   const skip = (page - 1) * parseInt(limit, 10);
 
-  const tours = await Tour.find(filter).skip(skip).limit(parseInt(limit, 10));
-
+  const [tours, totalDocuments] = await Promise.all([
+    Tour.find(filter).skip(skip).limit(parseInt(limit, 10)),
+    Tour.countDocuments()
+  ]);
   res.status(200).json({
     status: 'success',
     data: {
       result: tours.length,
       tours
+    },
+    pagination: {
+      totalDocuments
     }
   });
 });
