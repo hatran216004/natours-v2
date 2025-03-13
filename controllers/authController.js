@@ -27,6 +27,20 @@ const setTokenCookie = (res, refreshToken) => {
   res.cookie('token', refreshToken, cookieOptions);
 };
 
+const invalidateTokens = async (req, next) => {
+  const { token: refreshToken } = req.cookies;
+  const accessToken =
+    req.headers.authorization && req.headers.authorization.split(' ')[1];
+
+  if (!accessToken || !refreshToken)
+    return next(new AppError('Invalid token!', UNAUTHORIZED));
+
+  await Promise.all([
+    setTokenBlacklist(refreshToken, 'refresh'),
+    setTokenBlacklist(accessToken, 'access')
+  ]);
+};
+
 const createSendToken = async (user, statusCode, res) => {
   const { accessToken, refreshToken } = generateTokens(user.id);
 
@@ -89,17 +103,7 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.logout = catchAsync(async (req, res, next) => {
-  const { token: refreshToken } = req.cookies;
-  const accessToken =
-    req.headers.authorization && req.headers.authorization.split(' ')[1];
-
-  if (!refreshToken || !accessToken)
-    return next(new AppError('Invalid token!', UNAUTHORIZED));
-
-  await Promise.all([
-    setTokenBlacklist(refreshToken, 'refresh'),
-    setTokenBlacklist(accessToken, 'access')
-  ]);
+  await invalidateTokens(req, next);
   res.clearCookie('token');
 
   res.status(200).json({
@@ -179,11 +183,8 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     return next(new AppError('Your current password is wrong', UNAUTHORIZED));
   }
 
-  // 3. Add access token hiện tại vào blacklist
-  const token = req.headers.authorization.split(' ')[1];
-  if (!token)
-    return next(new AppError('Your current password is wrong', UNAUTHORIZED));
-  await setTokenBlacklist(token, 'access');
+  // 3. Add access, refresh token hiện tại vào blacklist
+  await invalidateTokens(req, next);
 
   // 4. Cập nhật mật khẩu & passwordChangedAt(document middleware)
   user.password = newPassword;
