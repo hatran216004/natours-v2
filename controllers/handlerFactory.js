@@ -27,18 +27,19 @@ exports.updateOne = (Modal) =>
     res.status(200).json({
       status: 'success',
       data: {
-        doc
+        data: doc
       }
     });
   });
 
 exports.createOne = (Modal) =>
   catchAsync(async (req, res, next) => {
-    const newDoc = await Modal.create(req.body);
+    const doc = await Modal.create(req.body);
+
     res.status(201).json({
       status: 'success',
       data: {
-        newDoc
+        data: doc
       }
     });
   });

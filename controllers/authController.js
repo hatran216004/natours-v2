@@ -195,7 +195,6 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
-// --- REFRESH TOKEN HANDLER ---
 exports.refreshToken = catchAsync(async (req, res, next) => {
   const { refreshToken: oldRefreshToken } = req.cookies;
   if (!oldRefreshToken) {
@@ -219,8 +218,6 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
     token: accessToken
   });
 });
-// ---- END REFRESH TOKEN ----
-
 /*
   ---- Redis ----
   .exec(); // Chạy tất cả các lệnh trong transaction

@@ -23,6 +23,7 @@ router.patch('/refresh-token', authController.refreshToken);
 router.patch(
   '/update-me',
   authMiddleware.authenticateJWT,
+  userController.checkBodyPassword,
   userController.updateMe
 );
 router.delete(
@@ -38,13 +39,12 @@ router
     authMiddleware.authenticateJWT,
     authMiddleware.restrictTo('admin'),
     userController.getAllUsers
-  )
-  .post(userController.createUser);
+  );
 
 router
   .route('/:id')
   .get(userController.getUser)
-  .patch(userController.updateUser)
+  .patch(userController.checkBodyPassword, userController.updateUser)
   .delete(userController.deleteUser);
 
 module.exports = router;
