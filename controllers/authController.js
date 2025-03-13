@@ -2,11 +2,10 @@ const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const Email = require('../utils/email');
 const catchAsync = require('../utils/catchAsync');
-const client = require('../redisClient');
 const { hashToken } = require('../utils/helpers');
 const {
-  signAccessToken,
-  signRefreshToken,
+  generateTokens,
+  setTokenBlacklist,
   verifyRefreshToken
 } = require('../utils/jwt');
 const {
@@ -14,41 +13,24 @@ const {
   BAD_REQUEST,
   NOT_FOUND,
   SERVER_ERROR,
-  MAX_USER_REFRESH_TOKEN,
   FORBIDDEN,
   MAX_ATTEMPTS,
   LOCK_TIME
 } = require('../utils/constants');
 
-const setTokensToCookie = (res, { accessToken, refreshToken }) => {
+const setTokenCookie = (res, refreshToken) => {
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
-  };
-
-  res.cookie('accessToken', accessToken, {
-    ...cookieOptions,
-    maxAge: process.env.COOKIE_ACCESS_TOKEN_EXPIRES_IN * 60 * 60 * 1000 // convert sang miliseconds
-  });
-
-  res.cookie('refreshToken', refreshToken, {
-    ...cookieOptions,
+    secure: process.env.NODE_ENV === 'production',
     maxAge: process.env.COOKIE_REFRESH_TOKEN_EXPIRES_IN * 60 * 60 * 1000
-  });
+  };
+  res.cookie('token', refreshToken, cookieOptions);
 };
 
 const createSendToken = async (user, statusCode, res) => {
-  const accessToken = signAccessToken(user.id);
-  const refreshToken = signRefreshToken(user.id);
+  const { accessToken, refreshToken } = generateTokens(user.id);
 
-  await client
-    .multi()
-    .sAdd(user.id, refreshToken)
-    .expire(user.id, process.env.REDIS_REFRESH_TOKEN_EXPIRES_IN * 24 * 60 * 60) // 30 days
-    .exec();
-
-  setTokensToCookie(res, { accessToken, refreshToken });
-
+  setTokenCookie(res, refreshToken);
   user.password = undefined;
 
   res.status(statusCode).json({
@@ -99,12 +81,6 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Incorrect email or password', UNAUTHORIZED));
   }
 
-  const tokens = await client.sMembers(user.id);
-
-  if (tokens.length > MAX_USER_REFRESH_TOKEN) {
-    await client.sRem(user.id, tokens[0]);
-  }
-
   user.failedAttempts = 0;
   user.lockUntil = null;
   await user.save({ validateBeforeSave: false });
@@ -113,15 +89,18 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.logout = catchAsync(async (req, res, next) => {
-  const { refreshToken, accessToken } = req.cookies;
-  if (!refreshToken || !accessToken) {
-    return next(new AppError('Invalid token!', BAD_REQUEST));
-  }
-  const decoded = await verifyRefreshToken(refreshToken);
-  await client.sRem(decoded.id, refreshToken);
+  const { token: refreshToken } = req.cookies;
+  const accessToken =
+    req.headers.authorization && req.headers.authorization.split(' ')[1];
 
-  res.clearCookie('refreshToken');
-  res.clearCookie('accessToken');
+  if (!refreshToken || !accessToken)
+    return next(new AppError('Invalid token!', UNAUTHORIZED));
+
+  await Promise.all([
+    setTokenBlacklist(refreshToken, 'refresh'),
+    setTokenBlacklist(accessToken, 'access')
+  ]);
+  res.clearCookie('token');
 
   res.status(200).json({
     status: 'success',
@@ -185,9 +164,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   // luôn sử dụng save() những thứ liên quan đến password, user để tất cả các trình validate có thể chạy
   await user.save();
 
-  // 4. Thu hồi tất cả refresh token (xóa hết trong Redis)
-  await client.del(user.id);
-
   // 5. Tạo mới acc, refresh token và login
   createSendToken(user, 200, res);
 });
@@ -203,44 +179,22 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     return next(new AppError('Your current password is wrong', UNAUTHORIZED));
   }
 
-  // 3. Cập nhật mật khẩu & passwordChangedAt(document middleware)
+  // 3. Add access token hiện tại vào blacklist
+  const token = req.headers.authorization.split(' ')[1];
+  if (!token)
+    return next(new AppError('Your current password is wrong', UNAUTHORIZED));
+  await setTokenBlacklist(token, 'access');
+
+  // 4. Cập nhật mật khẩu & passwordChangedAt(document middleware)
   user.password = newPassword;
   user.passwordConfirm = passwordConfirm;
   await user.save();
-
-  // 4. Thu hồi tất cả refresh token (xóa hết trong Redis)
-  await client.del(user.id);
 
   // 5. Tạo mới acccess, refresh token và login
   createSendToken(user, 200, res);
 });
 
 // --- REFRESH TOKEN HANDLER ---
-const handleTokenRefresh = async (oldRefreshToken) => {
-  const { id: userId } = await verifyRefreshToken(oldRefreshToken);
-  const newAccessToken = signAccessToken(userId);
-  const newRefreshToken = signRefreshToken(userId);
-
-  return { userId, newAccessToken, newRefreshToken };
-};
-
-const handleRedisOperations = async (
-  userId,
-  oldRefreshToken,
-  newRefreshToken
-) => {
-  const [isValidRefreshToken] = await client
-    .multi()
-    .sIsMember(userId, oldRefreshToken) // check oldRefreshToken hợp lệ
-    .sRem(userId, oldRefreshToken) // nếu hợp lệ thì xóa
-    .sAdd(userId, newRefreshToken) // thêm token mới
-    .expire(userId, process.env.REDIS_REFRESH_TOKEN_EXPIRES_IN * 24 * 60 * 60)
-    .exec();
-
-  if (!isValidRefreshToken)
-    throw new AppError('Invalid refresh token', UNAUTHORIZED);
-};
-
 exports.refreshToken = catchAsync(async (req, res, next) => {
   const { refreshToken: oldRefreshToken } = req.cookies;
   if (!oldRefreshToken) {
@@ -252,19 +206,16 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
     );
   }
 
-  const { userId, newAccessToken, newRefreshToken } =
-    await handleTokenRefresh(oldRefreshToken);
+  await setTokenBlacklist(oldRefreshToken, 'refresh');
+  const decoded = await verifyRefreshToken(oldRefreshToken);
 
-  await handleRedisOperations(userId, oldRefreshToken, newRefreshToken);
+  const { accessToken, refreshToken } = generateTokens(decoded.id);
 
-  setTokensToCookie(res, {
-    accessToken: newAccessToken,
-    refreshToken: newRefreshToken
-  });
+  setTokenCookie(res, refreshToken);
 
   res.status(200).json({
     status: 'success',
-    token: newAccessToken
+    token: accessToken
   });
 });
 // ---- END REFRESH TOKEN ----

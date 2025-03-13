@@ -5,7 +5,5 @@ exports.FORBIDDEN = 403; //  Người dùng đã xác thực nhưng không có q
 exports.NOT_FOUND = 404;
 exports.SERVER_ERROR = 500;
 
-exports.MAX_USER_REFRESH_TOKEN = 3;
-
 exports.MAX_ATTEMPTS = 3; // Số lần nhập sai tối đa
 exports.LOCK_TIME = 10 * 60 * 1000; // 10 phút

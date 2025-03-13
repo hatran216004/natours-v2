@@ -3,6 +3,7 @@ const passport = require('passport');
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const { UNAUTHORIZED } = require('../utils/constants');
+const client = require('../redisClient');
 
 const jwtOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -30,6 +31,14 @@ passport.use(
           ),
           false
         );
+
+      const isBlacklisted = await client.get(
+        `bl_access_${payload.id}_${payload.jti}`
+      );
+
+      if (isBlacklisted) {
+        return done(new AppError('Token revoked', UNAUTHORIZED), false);
+      }
       done(null, user);
     } catch (error) {
       return done(error, false);
