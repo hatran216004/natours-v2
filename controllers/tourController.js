@@ -1,9 +1,12 @@
 const Tour = require('../models/tourModel');
-const ApiFeatures = require('../utils/apiFeatures');
-const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const { NOT_FOUND } = require('../utils/constants');
-const { deleteOne, updateOne, createOne } = require('./handlerFactory');
+const {
+  deleteOne,
+  updateOne,
+  createOne,
+  getAll,
+  getOne
+} = require('./handlerFactory');
 
 // ?limit=5&sort=-ratingsAverage,price: lọc ra 5 tour có ratingsAverage cao nhất, nếu bằng nhau thì ưu tiên tour có giá thấp hơn
 exports.aliasTopTours = (req, res, next) => {
@@ -13,46 +16,8 @@ exports.aliasTopTours = (req, res, next) => {
   next();
 };
 
-exports.getAllTours = catchAsync(async (req, res, next) => {
-  const features = new ApiFeatures(Tour.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-
-  // Excute
-  const [tours, totalDocuments] = await Promise.all([
-    features.query,
-    Tour.countDocuments()
-  ]);
-
-  res.status(200).json({
-    status: 'success',
-    requestedAt: req.requestTime,
-    data: {
-      result: tours.length,
-      tours
-    },
-    pagination: {
-      totalDocuments
-    }
-  });
-});
-
-exports.getTour = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findById(req.params.id).populate('reviews');
-  if (!tour) {
-    return next(new AppError('No document found with that ID', NOT_FOUND));
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour
-    }
-  });
-});
-
+exports.getAllTours = getAll(Tour);
+exports.getTour = getOne(Tour, { path: 'reviews', select: '-__v' });
 exports.createTour = createOne(Tour);
 exports.updateTour = updateOne(Tour);
 exports.deleteTour = deleteOne(Tour);
