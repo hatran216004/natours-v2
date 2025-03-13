@@ -20,6 +20,7 @@ router.patch(
 
 router.patch('/refresh-token', authController.refreshToken);
 
+router.get('/me', authMiddleware.authenticateJWT, userController.getMe);
 router.patch(
   '/update-me',
   authMiddleware.authenticateJWT,

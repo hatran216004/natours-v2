@@ -10,6 +10,15 @@ exports.getUser = getOne(User);
 exports.updateUser = updateOne(User);
 exports.deleteUser = deleteOne(User);
 
+exports.getMe = catchAsync(async (req, res, next) =>
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: req.user
+    }
+  })
+);
+
 exports.updateMe = catchAsync(async (req, res, next) => {
   const filteredBody = filterObj(req.body, 'name', 'email');
   const user = await User.findByIdAndUpdate(req.user.id, filteredBody, {
