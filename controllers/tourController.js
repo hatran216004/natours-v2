@@ -54,7 +54,7 @@ exports.searchTours = catchAsync(async (req, res, next) => {
 });
 
 exports.getTourStats = catchAsync(async (req, res, next) => {
-  const stats = await Tour.aggregate([
+  let stats = await Tour.aggregate([
     {
       $match: { ratingsAverage: { $gte: 4.5 } }
     },
@@ -71,16 +71,27 @@ exports.getTourStats = catchAsync(async (req, res, next) => {
     },
     {
       $sort: { avgPrice: 1 }
+    },
+    {
+      $addFields: {
+        difficulty: '$_id'
+      }
+    },
+    {
+      $project: {
+        _id: 0
+      }
     }
     // {
     //   $match: { _id: { $ne: 'easy' } }
     // }
-    // {
-    //   $project: {
-    //     _id: 0
-    //   }
-    // }
   ]);
+
+  stats = stats.map((stat) => ({
+    ...stat,
+    avgRating: Math.round((stat.avgRating * 10) / 10),
+    avgPrice: Math.round((stat.avgPrice * 10) / 10)
+  }));
 
   res.status(200).json({
     status: 'success',

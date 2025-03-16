@@ -5,12 +5,13 @@ const authMiddleware = require('../middleware/authMiddleware');
 // merge params với router cha(tourRouter) trong nested route
 const router = express.Router({ mergeParams: true });
 
+router.use(authMiddleware.authenticateJWT);
+
 router
   .route('/')
   .get(reviewController.getAllReviews)
   .post(
-    authMiddleware.authenticateJWT,
-    authMiddleware.restrictTo('user'),
+    authMiddleware.restrictTo('user', 'admin'),
     reviewController.setTourUserIds,
     reviewController.createReview
   );
@@ -18,7 +19,13 @@ router
 router
   .route('/:id')
   .get(reviewController.getReview)
-  .patch(reviewController.updateReview)
-  .delete(reviewController.deleteReview);
+  .patch(
+    authMiddleware.restrictTo('user', 'admin'),
+    reviewController.updateReview
+  )
+  .delete(
+    authMiddleware.restrictTo('user', 'admin'),
+    reviewController.deleteReview
+  );
 
 module.exports = router;

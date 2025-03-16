@@ -14,17 +14,30 @@ router
 // --
 router.get('/search/:key', tourController.searchTours);
 router.get('/tour-stats', tourController.getTourStats);
-router.get('/monthly-plan/:year', tourController.getMonthlyPlan);
+router.get(
+  '/monthly-plan/:year',
+  authMiddleware.authenticateJWT,
+  authMiddleware.restrictTo('admin', 'lead-guide', 'guide'),
+  tourController.getMonthlyPlan
+);
 
 router
   .route('/')
   .get(tourController.getAllTours)
-  .post(tourController.createTour);
+  .post(
+    authMiddleware.authenticateJWT,
+    authMiddleware.restrictTo('admin', 'lead-guide'),
+    tourController.createTour
+  );
 
 router
   .route('/:id')
   .get(tourController.getTour)
-  .patch(tourController.updateTour)
+  .patch(
+    authMiddleware.authenticateJWT,
+    authMiddleware.restrictTo('admin', 'lead-guide'),
+    tourController.updateTour
+  )
   .delete(
     authMiddleware.authenticateJWT,
     authMiddleware.restrictTo('admin', 'lead-guide'),

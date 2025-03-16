@@ -1,0 +1,28 @@
+[
+  {
+    "name": "user",
+    "description": "Regular user",
+    "permissions": ["read_tour, create_review, update_review"]
+  },
+  {
+    "name": "guide",
+    "description": "Tour guide",
+    "permissions": ["read_tour"]
+  },
+  {
+    "name": "lead-guide",
+    "description": "Tour lead guide",
+    "permissions": ["read_tour"]
+  },
+  {
+    "name": "admin",
+    "description": "Administrator",
+    "permissions": [
+      "read_tour",
+      "create_tour",
+      "update_tour",
+      "delete_tour",
+      "manage_users"
+    ]
+  }
+]

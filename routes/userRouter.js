@@ -8,40 +8,28 @@ const router = express.Router(); // tạo ra 1 middleware router(userRouter)
 // User
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
-router.post('/logout', authController.logout);
+router.patch('/refresh-token', authController.refreshToken);
 
 router.post('/forgot-password', authController.forgotPassword);
 router.patch('/reset-password/:token', authController.resetPassword);
-router.patch(
-  '/update-my-password/',
-  authMiddleware.authenticateJWT,
-  authController.updatePassword
-);
 
-router.patch('/refresh-token', authController.refreshToken);
+// -- Protect all routes after this middleware
+router.use(authMiddleware.authenticateJWT);
 
-router.get('/me', authMiddleware.authenticateJWT, userController.getMe);
+router.post('/logout', authController.logout);
+router.patch('/update-my-password/', authController.updatePassword);
+router.get('/me', userController.getMe);
 router.patch(
   '/update-me',
-  authMiddleware.authenticateJWT,
   userController.checkBodyPassword,
   userController.updateMe
 );
-router.delete(
-  '/delete-me',
-  authMiddleware.authenticateJWT,
-  userController.deleteMe
-);
+router.delete('/delete-me', userController.deleteMe);
 
 // Quản trị viên
-router
-  .route('/')
-  .get(
-    authMiddleware.authenticateJWT,
-    authMiddleware.restrictTo('admin'),
-    userController.getAllUsers
-  );
+router.use(authMiddleware.restrictTo('admin'));
 
+router.route('/').get(userController.getAllUsers);
 router
   .route('/:id')
   .get(userController.getUser)

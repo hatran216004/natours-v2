@@ -2,6 +2,7 @@ const ApiFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { NOT_FOUND } = require('../utils/constants');
+const { filterObj } = require('../utils/helpers');
 
 exports.getAll = (Model) =>
   catchAsync(async (req, res, next) => {
@@ -63,9 +64,12 @@ exports.deleteOne = (Model) =>
     });
   });
 
-exports.updateOne = (Model) =>
+exports.updateOne = (Model, filterOpts) =>
   catchAsync(async (req, res, next) => {
-    const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
+    let filteredBody = { ...req.body };
+    if (filterOpts) filteredBody = filterObj(req.body, ...filterOpts);
+
+    const doc = await Model.findByIdAndUpdate(req.params.id, filteredBody, {
       new: true, // trả về doc mới sau khi update
       runValidators: true
     });
