@@ -15,6 +15,8 @@ const AppError = require('./utils/appError');
 const tourRouter = require('./routes/tourRouter');
 const userRouter = require('./routes/userRouter');
 const reviewRouter = require('./routes/reviewRouter');
+const roleRouter = require('./routes/roleRouter');
+const permissionRouter = require('./routes/permissionRouter');
 const globalErrorHandler = require('./controllers/errorController');
 // const limiter = require('./middleware/rateLimitMiddleware');
 
@@ -76,6 +78,8 @@ app.use((req, res, next) => {
 // Mounting router: gắn router tourRouter vào route '/api/v2/tours'
 app.use('/api/v2/tours', tourRouter); //  tourRouter middleware chỉ chạy trên route '/api/v2/tours'
 app.use('/api/v2/users', userRouter);
+app.use('/api/v2/roles', roleRouter);
+app.use('/api/v2/permissions', permissionRouter);
 app.use('/api/v2/reviews', reviewRouter);
 
 // Hanlde error unhanlded routes
