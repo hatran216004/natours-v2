@@ -1,5 +1,6 @@
 [
   { "name": "read_tour", "description": "Can read tours" },
+  { "name": "read_monthly_plan", "description": "Can view monthly plans" },
   { "name": "create_tour", "description": "Can create tours" },
   { "name": "update_tour", "description": "Can update tours" },
   { "name": "delete_tour", "description": "Can delete tours" },
@@ -7,5 +8,7 @@
   { "name": "read_review", "description": "Can read reviews" },
   { "name": "update_review", "description": "Can update reviews" },
   { "name": "delete_review", "description": "Can delete reviews" },
-  { "name": "manage_users", "description": "Can manage users" }
+  { "name": "manage_users", "description": "Can manage users" },
+  { "name": "update_me", "description": "Can update own profile" },
+  { "name": "delete_me", "description": "Can delete own account" }
 ]

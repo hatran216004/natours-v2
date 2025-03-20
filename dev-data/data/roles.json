@@ -2,17 +2,29 @@
   {
     "name": "user",
     "description": "Regular user",
-    "permissions": ["read_tour, create_review, update_review"]
+    "permissions": [
+      "read_tour",
+      "update_review",
+      "create_review",
+      "update_me",
+      "delete_me"
+    ]
   },
   {
     "name": "guide",
     "description": "Tour guide",
-    "permissions": ["read_tour"]
+    "permissions": ["read_tour", "read_monthly_plan"]
   },
   {
     "name": "lead-guide",
     "description": "Tour lead guide",
-    "permissions": ["read_tour"]
+    "permissions": [
+      "read_tour",
+      "read_monthly_plan",
+      "create_tour",
+      "update_tour",
+      "delete_tour"
+    ]
   },
   {
     "name": "admin",
@@ -22,7 +34,8 @@
       "create_tour",
       "update_tour",
       "delete_tour",
-      "manage_users"
+      "manage_users",
+      "read_monthly_plan"
     ]
   }
 ]
