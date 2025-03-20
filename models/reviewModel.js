@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Tour = require('./tourModel');
 
 const reviewSchema = new mongoose.Schema(
   {
@@ -44,6 +45,35 @@ reviewSchema.pre(/^find/, function (next) {
   // });
   this.populate('user', 'name photo');
   next();
+});
+
+// statics method có sẵn trên model
+reviewSchema.statics.calcAverageRatings = async function (tourId) {
+  // this trỏ đến model
+  const stats = await this.aggregate([
+    {
+      $match: {
+        tour: tourId
+      }
+    },
+    {
+      $group: {
+        _id: '$tour',
+        nRating: { $sum: 1 },
+        avgRating: { $avg: '$rating' }
+      }
+    }
+  ]);
+
+  await Tour.findByIdAndUpdate(tourId, {
+    ratingsAverage: stats[0].avgRating,
+    ratingsQuantity: stats[0].nRating
+  });
+};
+
+// this bên trong callback function sẽ trỏ đến document vừa được lưu vào database
+reviewSchema.post('save', async function () {
+  await this.constructor.calcAverageRatings(this.tour);
 });
 
 const Review = mongoose.model('Review', reviewSchema);

@@ -11,7 +11,7 @@ router
   .route('/')
   .get(reviewController.getAllReviews)
   .post(
-    authMiddleware.checkPermission('read_review'),
+    authMiddleware.checkPermission('create_review'),
     reviewController.setTourUserIds,
     reviewController.createReview
   );
