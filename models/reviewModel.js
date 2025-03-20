@@ -34,6 +34,8 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
+reviewSchema.index({ rating: 1 });
+
 reviewSchema.pre(/^find/, function (next) {
   // console.log('review query middleware');
   // this.populate('user', 'name photo').populate({

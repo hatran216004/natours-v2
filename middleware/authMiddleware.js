@@ -37,7 +37,7 @@ exports.checkPermission = (...permissions) => {
       return next(
         new AppError(
           "You don't have permission to perform this action",
-          FORBIDDEN
+          UNAUTHORIZED
         )
       );
 

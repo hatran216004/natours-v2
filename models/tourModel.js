@@ -118,6 +118,15 @@ const tourSchema = new Schema(
   }
 );
 
+tourSchema.index({
+  price: 1,
+  ratingsAverage: 1,
+  ratingsQuantity: 1,
+  priceDiscount: 1
+});
+
+tourSchema.index({ slug: 1 });
+
 // VIRTUAL PROPERTIES
 // * Không thể dùng thuộc tính ảo để truy vấn (vì nó không được lưu trong db)
 tourSchema.virtual('durationWeeks').get(function () {
