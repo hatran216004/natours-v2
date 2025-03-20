@@ -64,10 +64,17 @@ reviewSchema.statics.calcAverageRatings = async function (tourId) {
     }
   ]);
 
-  await Tour.findByIdAndUpdate(tourId, {
-    ratingsAverage: stats[0].avgRating || 0,
-    ratingsQuantity: stats[0].nRating || 4.5
-  });
+  if (stats.length > 0) {
+    await Tour.findByIdAndUpdate(tourId, {
+      ratingsAverage: stats[0].avgRating,
+      ratingsQuantity: stats[0].nRating
+    });
+  } else {
+    await Tour.findByIdAndUpdate(tourId, {
+      ratingsAverage: 4.5,
+      ratingsQuantity: 0
+    });
+  }
 };
 
 // this bên trong callback function sẽ trỏ đến document vừa được lưu vào database
