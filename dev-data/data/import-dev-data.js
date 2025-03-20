@@ -39,7 +39,7 @@ const importData = async () => {
     // });
     // await Review.create(reviews);
 
-    // import roles & permissions
+    // // import roles & permissions
     // const permDocs = await Permission.create(permissions);
     // const savedPermissions = {};
     // permDocs.forEach((perm) => {

@@ -1,5 +1,7 @@
 const passport = require('passport');
 const User = require('../models/userModel');
+const Role = require('../models/roleModel');
+require('../models/permissionModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { UNAUTHORIZED, FORBIDDEN } = require('../utils/constants');
@@ -15,6 +17,40 @@ exports.restrictTo = (...roles) => {
         )
       );
     }
+    next();
+  };
+};
+
+/*
+  Duyệt qua danh sách quyền cần kiểm tra (permissions)
+  So sánh với danh sách quyền của role
+  Nếu role có ít nhất một quyền trong danh sách permissions, thì cho phép tiếp tục
+*/
+exports.checkPermission = (...permissions) => {
+  return async (req, res, next) => {
+    const role = await Role.findOne({ name: req.user.role }).populate({
+      path: 'permissions',
+      select: 'name'
+    });
+
+    if (!role)
+      return next(
+        new AppError(
+          "You don't have permission to perform this action",
+          FORBIDDEN
+        )
+      );
+
+    const hasPermission = permissions.some((namePerm) =>
+      role.permissions.some((perm) => perm.name === namePerm)
+    );
+    if (!hasPermission)
+      return next(
+        new AppError(
+          "You don't have permission to perform this action",
+          FORBIDDEN
+        )
+      );
     next();
   };
 };

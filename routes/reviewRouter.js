@@ -11,7 +11,7 @@ router
   .route('/')
   .get(reviewController.getAllReviews)
   .post(
-    authMiddleware.restrictTo('user', 'admin'),
+    authMiddleware.checkPermission('read_review'),
     reviewController.setTourUserIds,
     reviewController.createReview
   );
@@ -20,11 +20,11 @@ router
   .route('/:id')
   .get(reviewController.getReview)
   .patch(
-    authMiddleware.restrictTo('user', 'admin'),
+    authMiddleware.checkPermission('update_review'),
     reviewController.updateReview
   )
   .delete(
-    authMiddleware.restrictTo('user', 'admin'),
+    authMiddleware.checkPermission('delete_review'),
     reviewController.deleteReview
   );
 

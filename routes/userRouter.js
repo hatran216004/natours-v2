@@ -24,10 +24,14 @@ router.patch(
   userController.checkBodyPassword,
   userController.updateMe
 );
-router.delete('/delete-me', userController.deleteMe);
+router.delete(
+  '/delete-me',
+  authMiddleware.checkPermission('delete_me'),
+  userController.deleteMe
+);
 
 // Quản trị viên
-router.use(authMiddleware.restrictTo('admin'));
+router.use(authMiddleware.checkPermission('manage_users'));
 
 router.route('/').get(userController.getAllUsers);
 router

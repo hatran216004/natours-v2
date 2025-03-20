@@ -17,7 +17,7 @@ router.get('/tour-stats', tourController.getTourStats);
 router.get(
   '/monthly-plan/:year',
   authMiddleware.authenticateJWT,
-  authMiddleware.restrictTo('admin', 'lead-guide', 'guide'),
+  authMiddleware.checkPermission('read_monthly_plan'),
   tourController.getMonthlyPlan
 );
 
@@ -26,7 +26,7 @@ router
   .get(tourController.getAllTours)
   .post(
     authMiddleware.authenticateJWT,
-    authMiddleware.restrictTo('admin', 'lead-guide'),
+    authMiddleware.checkPermission('create_tour'),
     tourController.createTour
   );
 
@@ -35,12 +35,12 @@ router
   .get(tourController.getTour)
   .patch(
     authMiddleware.authenticateJWT,
-    authMiddleware.restrictTo('admin', 'lead-guide'),
+    authMiddleware.checkPermission('update_tour'),
     tourController.updateTour
   )
   .delete(
     authMiddleware.authenticateJWT,
-    authMiddleware.restrictTo('admin', 'lead-guide'),
+    authMiddleware.checkPermission('delete_tour'),
     tourController.deleteTour
   );
 
