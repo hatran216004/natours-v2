@@ -47,9 +47,8 @@ reviewSchema.pre(/^find/, function (next) {
   next();
 });
 
-// statics method có sẵn trên model
+// statics method có sẵn trên model, this trỏ đến model
 reviewSchema.statics.calcAverageRatings = async function (tourId) {
-  // this trỏ đến model
   const stats = await this.aggregate([
     {
       $match: {
@@ -66,14 +65,19 @@ reviewSchema.statics.calcAverageRatings = async function (tourId) {
   ]);
 
   await Tour.findByIdAndUpdate(tourId, {
-    ratingsAverage: stats[0].avgRating,
-    ratingsQuantity: stats[0].nRating
+    ratingsAverage: stats[0].avgRating || 0,
+    ratingsQuantity: stats[0].nRating || 4.5
   });
 };
 
 // this bên trong callback function sẽ trỏ đến document vừa được lưu vào database
 reviewSchema.post('save', async function () {
   await this.constructor.calcAverageRatings(this.tour);
+});
+
+// findByIdAndUpdate/Delte là findOnedAndUpdate/Delte behind the scence
+reviewSchema.post(/^findOneAnd/, async function (doc) {
+  await doc.constructor.calcAverageRatings(doc.tour);
 });
 
 const Review = mongoose.model('Review', reviewSchema);
