@@ -27,6 +27,8 @@ router.get(
   tourController.getToursWithin
 );
 
+router.get('/distance/:latlng/unit/:unit', tourController.getDistances);
+
 router.get(
   '/monthly-plan/:year',
   authMiddleware.authenticateJWT,

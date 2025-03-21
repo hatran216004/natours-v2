@@ -182,8 +182,15 @@ tourSchema.post(/^find/, function (documents, next) {
 
 // AGGREGATION MIDDLEWARE
 tourSchema.pre('aggregate', function (next) {
-  // Thêm stage match vào đầu pipeline()
-  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+  const GEOSPATIAL_OPERATOR_TEST = /^[$]geo[a-zA-Z]*/;
+  const geoAggregate = this.pipeline().filter(
+    (stage) => Object.keys(stage)[0].search(GEOSPATIAL_OPERATOR_TEST) !== -1
+  );
+
+  if (!geoAggregate.length) {
+    // Thêm stage match vào đầu pipeline()
+    this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+  }
   next();
 });
 

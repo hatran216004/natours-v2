@@ -181,6 +181,52 @@ exports.getToursWithin = catchAsync(async (req, res, next) => {
   });
 });
 
+// Chỉ hoạt động nếu có 2dsphere index, Cần tạo index trên startLocation
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  const [lat, lng] = latlng.split(',');
+
+  if (!lat || !lng)
+    return next(
+      new AppError('Please provide latitude longtitude', BAD_REQUEST)
+    );
+
+  const multiplier = unit === 'mi' ? 0.00062137 : 0.001;
+
+  // $geoNear: phải luôn là stage đầu tiên
+  const distances = await Tour.aggregate([
+    // stage giúp tìm các docs gần một vị trí cụ thể
+    {
+      $geoNear: {
+        near: {
+          type: 'Point',
+          coordinates: [Number(lng), Number(lat)]
+        },
+        distanceField: 'distance',
+        distanceMultiplier: multiplier
+      }
+    },
+    {
+      $sort: {
+        distance: 1
+      }
+    },
+    {
+      $project: {
+        name: 1,
+        distance: 1
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      tours: distances
+    }
+  });
+});
+
 // Tìm các tour có maxGroupSize > 10
 // exports.getTopRatings();
 
