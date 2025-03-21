@@ -126,6 +126,7 @@ tourSchema.index({
 });
 
 tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
 
 // VIRTUAL PROPERTIES
 // * Không thể dùng thuộc tính ảo để truy vấn (vì nó không được lưu trong db)

@@ -38,8 +38,6 @@ exports.checkPermission = (...permissions) => {
       permissionsList.includes(perm)
     );
 
-    console.log(hasPermission);
-
     if (!hasPermission)
       return next(
         new AppError(

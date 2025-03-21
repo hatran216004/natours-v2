@@ -14,6 +14,19 @@ router
 // --
 router.get('/search/:key', tourController.searchTours);
 router.get('/tour-stats', tourController.getTourStats);
+
+/**
+ * distance - Bán kính tìm kiếm (km/miles)
+ * latlng - Tọa độ trung tâm (latitude,longitude)
+ * unit - Đơn vị khoảng cách ('km' hoặc 'mi')
+ * các tour du lịch nằm trong khoảng cách nhất định từ một tọa độ trung tâm (latitude, longitude)
+ * /tours-within/200/center/10.7769,106.7009/unit/km: các tour du lịch trong bán kính 200km tính từ tọa độ Hồ Chí Minh
+ */
+router.get(
+  '/tours-within/:distance/center/:latlng/unit/:unit',
+  tourController.getToursWithin
+);
+
 router.get(
   '/monthly-plan/:year',
   authMiddleware.authenticateJWT,
