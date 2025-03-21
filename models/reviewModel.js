@@ -77,7 +77,7 @@ reviewSchema.statics.calcAverageRatings = async function (tourId) {
   }
 };
 
-// this bên trong callback function sẽ trỏ đến document vừa được lưu vào database
+// this bên trong callback function sẽ trỏ đến document
 reviewSchema.post('save', async function () {
   await this.constructor.calcAverageRatings(this.tour);
 });

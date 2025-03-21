@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const { hashToken } = require('../utils/helpers');
+const Role = require('./roleModel');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -37,12 +38,8 @@ const userSchema = new mongoose.Schema({
     }
   },
   role: {
-    type: String,
-    enum: {
-      values: ['admin', 'user', 'guide', 'lead-guide'],
-      message: 'Role is either: admin, user, guides, lead-guide'
-    },
-    default: 'user'
+    type: mongoose.Schema.ObjectId,
+    ref: 'Role'
   },
   passwordChangedAt: Date,
   passwordResetToken: String,
@@ -81,13 +78,22 @@ userSchema.pre('save', function (next) {
   next();
 });
 
+userSchema.pre('save', async function (next) {
+  if (!this.role) {
+    const userRole = await Role.findOne({ name: 'user' });
+    this.role = userRole.id;
+  }
+  next();
+});
+
 userSchema.pre(/^find/, function (next) {
-  this.find({ active: { $ne: false } }).select('-__v');
+  this.find({ active: { $ne: false } })
+    .select('-__v')
+    .populate('role');
   next();
 });
 
 // METHODS
-
 // method có trên tất cả document trong collection (instance method)
 userSchema.methods.correctPassword = async function (
   candidatePassword, // password nhận từ req.boy (original password)
@@ -123,3 +129,15 @@ userSchema.methods.isLocked = function () {
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
+
+/**
+ * role: {
+    type: String,
+    enum: {
+      values: ['admin', 'user', 'guide', 'lead-guide'],
+      message: 'Role is either: admin, user, guides, lead-guide'
+    },
+    default: 'user'
+  }
+ * 
+ */

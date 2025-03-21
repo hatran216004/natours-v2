@@ -9,7 +9,7 @@ const { verifyAccessToken } = require('../utils/jwt');
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!roles.includes(req.user.role.name)) {
       return next(
         new AppError(
           "You don't have permission to perform this action",
@@ -28,22 +28,18 @@ exports.restrictTo = (...roles) => {
 */
 exports.checkPermission = (...permissions) => {
   return async (req, res, next) => {
-    const role = await Role.findOne({ name: req.user.role }).populate({
+    const role = await Role.findOne({ name: req.user.role.name }).populate({
       path: 'permissions',
       select: 'name'
     });
 
-    if (!role)
-      return next(
-        new AppError(
-          "You don't have permission to perform this action",
-          UNAUTHORIZED
-        )
-      );
-
-    const hasPermission = permissions.some((namePerm) =>
-      role.permissions.some((perm) => perm.name === namePerm)
+    const permissionsList = role.permissions.map((per) => per.name);
+    const hasPermission = permissions.some((perm) =>
+      permissionsList.includes(perm)
     );
+
+    console.log(hasPermission);
+
     if (!hasPermission)
       return next(
         new AppError(

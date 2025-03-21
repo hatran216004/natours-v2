@@ -58,7 +58,8 @@ const createSendToken = async (user, statusCode, res) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
   const { email, password, name, passwordConfirm } = req.body;
-  const newUser = await User.create({ email, name, password, passwordConfirm });
+  let newUser = await User.create({ email, name, password, passwordConfirm });
+  newUser = await newUser.populate({ path: 'role', select: 'name' });
 
   // const url = `${req.protocol}://${req.get('host')}/`;
   // await new Email(newUser, url).sendWelcome();
