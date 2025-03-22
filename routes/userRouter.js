@@ -1,12 +1,9 @@
 const express = require('express');
-const multer = require('multer');
 const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router(); // tạo ra 1 middleware router(userRouter)
-
-const upload = multer({ dest: 'public/img/users' });
 
 // User
 router.post('/signup', authController.signup);
@@ -24,7 +21,7 @@ router.patch('/update-my-password/', authController.updatePassword);
 router.get('/me', userController.getMe);
 router.patch(
   '/update-me',
-  upload.single('photo'),
+  userController.uploadUserPhoto,
   userController.checkBodyPassword,
   userController.updateMe
 );
