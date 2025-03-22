@@ -26,7 +26,7 @@ exports.getAll = (Model) =>
     const modelName = Model.modelName.toLowerCase();
 
     const totalPages = Math.ceil(
-      totalDocuments / parseInt(req.query.limit, 10) || PAGE_LIMIT
+      totalDocuments / (parseInt(req.query.limit, 10) || PAGE_LIMIT)
     );
 
     res.status(200).json({
