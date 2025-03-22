@@ -10,12 +10,7 @@ const { verifyAccessToken } = require('../utils/jwt');
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role.name)) {
-      return next(
-        new AppError(
-          "You don't have permission to perform this action",
-          FORBIDDEN
-        )
-      );
+      return next(new AppError('Access denied', FORBIDDEN));
     }
     next();
   };
@@ -35,13 +30,7 @@ exports.checkPermission = (...permissions) => {
       permissionsList.includes(perm)
     );
 
-    if (!hasPermission)
-      return next(
-        new AppError(
-          "You don't have permission to perform this action",
-          FORBIDDEN
-        )
-      );
+    if (!hasPermission) return next(new AppError('Access denied', FORBIDDEN));
     next();
   };
 };

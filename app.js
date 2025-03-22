@@ -35,6 +35,7 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(express.static(path.join(__dirname, 'public'))); // middleware để phục vụ các static files từ folder public
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(mongoSanitize()); // Data sanitization against NoSQL query injection
