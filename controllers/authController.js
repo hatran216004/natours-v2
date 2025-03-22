@@ -46,6 +46,8 @@ const createSendToken = async (user, statusCode, res) => {
 
   setTokenCookie(res, refreshToken);
   user.password = undefined;
+  user.failedAttempts = undefined;
+  user.lockUntil = undefined;
 
   res.status(statusCode).json({
     status: 'success',
@@ -73,7 +75,9 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!email || !password)
     return next(new AppError('You are missing email or password', BAD_REQUEST));
 
-  const user = await User.findOne({ email }).select('+password -__v');
+  const user = await User.findOne({ email }).select(
+    '+password -__v +failedAttempts +lockUntil'
+  );
 
   if (!user)
     return next(new AppError('Incorrect email or password', UNAUTHORIZED));

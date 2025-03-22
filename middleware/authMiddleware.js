@@ -23,7 +23,9 @@ exports.restrictTo = (...roles) => {
 */
 exports.checkPermission = (...permissions) => {
   return async (req, res, next) => {
-    const role = await Role.findOne({ name: req.user.role.name });
+    const role = await Role.findOne({ name: req.user.role.name }).populate(
+      'permissions'
+    );
 
     const permissionsList = role.permissions.map((per) => per.name);
     const hasPermission = permissions.some((perm) =>

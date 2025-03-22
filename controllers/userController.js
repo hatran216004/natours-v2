@@ -47,9 +47,9 @@ exports.getMe = catchAsync(async (req, res, next) =>
 );
 
 exports.updateMe = catchAsync(async (req, res, next) => {
-  console.log({ file: req.file });
-
   const filteredBody = filterObj(req.body, 'name', 'email');
+  if (req.file) filteredBody.photo = req.file.filename;
+
   const user = await User.findByIdAndUpdate(req.user.id, filteredBody, {
     new: true,
     runValidators: true

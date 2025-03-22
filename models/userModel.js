@@ -20,7 +20,10 @@ const userSchema = new mongoose.Schema({
       message: 'Please enter a valid email'
     }
   },
-  photo: String,
+  photo: {
+    type: String,
+    default: 'default.jpg'
+  },
   password: {
     type: String,
     required: [true, 'Please enter a password'],
@@ -52,11 +55,13 @@ const userSchema = new mongoose.Schema({
   failedAttempts: {
     // Số lần đăng nhập thất bại
     type: Number,
-    default: 0
+    default: 0,
+    select: false
   },
   lockUntil: {
     type: Date, // Thời gian bị khóa tài khoản
-    default: null
+    default: null,
+    select: false
   }
 });
 
@@ -89,7 +94,7 @@ userSchema.pre('save', async function (next) {
 userSchema.pre(/^find/, function (next) {
   this.find({ active: { $ne: false } })
     .select('-__v')
-    .populate('role');
+    .populate({ path: 'role', select: '-__v -permissions' });
   next();
 });
 
