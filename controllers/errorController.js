@@ -33,6 +33,18 @@ const handleJWTExpiredError = () =>
     UNAUTHORIZED
   );
 
+const handleAxiosError = (err) => {
+  let message = 'Request to external service failed';
+
+  if (err.response && err.response.data) {
+    message = `External API error: ${JSON.stringify(err.response.data)}`;
+  } else if (err.message) {
+    message = `Request failed: ${err.message}`;
+  }
+
+  return new AppError(message, SERVER_ERROR);
+};
+
 const sendErrorDev = (err, req, res) => {
   // Api
   if (req.originalUrl.startsWith('/api')) {
@@ -95,6 +107,7 @@ module.exports = (err, req, res, next) => {
       error = handleValidationErrorDB(error);
     if (error.name === 'JsonWebTokenError') error = handleJWTError();
     if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
+    if (error.isAxiosError) error = handleAxiosError(error);
 
     sendErrorProd(error, req, res);
   }

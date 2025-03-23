@@ -1,9 +1,30 @@
-exports.PAGE_LIMIT = 10;
-exports.BAD_REQUEST = 400;
-exports.UNAUTHORIZED = 401; // Người dùng chưa đăng nhập, Token bị thiếu, hết hạn hoặc không hợp lệ
-exports.FORBIDDEN = 403; //  Người dùng đã xác thực nhưng không có quyền truy cập
-exports.NOT_FOUND = 404;
-exports.SERVER_ERROR = 500;
+module.exports = {
+  PAGE_LIMIT: 10,
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  METHOD_NOT_ALLOWED: 405,
+  CONFLICT: 409,
+  UNPROCESSABLE_ENTITY: 422,
+  TOO_MANY_REQUESTS: 429,
+  SERVER_ERROR: 500,
 
-exports.MAX_ATTEMPTS = 3; // Số lần nhập sai tối đa
-exports.LOCK_TIME = 10 * 60 * 1000; // 10 phút
+  // Payment Specific
+  PAYMENT_PENDING: 'pending',
+  PAYMENT_SUCCESS: 'success',
+  PAYMENT_FAILED: 'failed',
+  PAYMENT_CANCELLED: 'cancelled',
+
+  // MoMo Result Codes
+  MOMO_SUCCESS: '0',
+  MOMO_PROCESSING: '9000',
+  MOMO_USER_CANCELLED: '1006',
+  MOMO_PAYMENT_FAILED: '1003',
+
+  MAX_ATTEMPTS: 3, // Số lần nhập sai tối đa
+  LOCK_TIME: 10 * 60 * 1000 // 10 phút
+};
