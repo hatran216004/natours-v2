@@ -56,7 +56,7 @@ const tourSchema = new Schema(
       validate: {
         // this chỉ trỏ đến current document khi tạo mới document
         validator: function (value) {
-          return value < this.price && value > 0;
+          return value > 0 && value < this.price;
         },
         message: 'Discount price {VALUE} should be below regular price and > 0'
       }
@@ -144,6 +144,12 @@ tourSchema.virtual('reviews', {
 // DOCUMENT MIDDLEWARE
 tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
+  next();
+});
+
+tourSchema.pre('save', function (next) {
+  this.images = this.images.map((image) => image.replace('undefined', this.id));
+  this.imageCover = this.imageCover.replace('undefined', this.id);
   next();
 });
 

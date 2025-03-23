@@ -42,6 +42,8 @@ router
   .post(
     authMiddleware.authenticateJWT,
     authMiddleware.checkPermission('create_tour'),
+    tourController.uploadTourImages,
+    tourController.resizeTourImages,
     tourController.createTour
   );
 
@@ -51,6 +53,8 @@ router
   .patch(
     authMiddleware.authenticateJWT,
     authMiddleware.checkPermission('update_tour'),
+    tourController.uploadTourImages,
+    tourController.resizeTourImages,
     tourController.updateTour
   )
   .delete(
