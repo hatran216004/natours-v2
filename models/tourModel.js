@@ -54,7 +54,7 @@ const tourSchema = new Schema(
     priceDiscount: {
       type: Number,
       validate: {
-        // this chỉ trỏ đến current document khi tạo mới document
+        // this chỉ trỏ đến current document khi .save() và .create()
         validator: function (value) {
           return value > 0 && value < this.price;
         },
