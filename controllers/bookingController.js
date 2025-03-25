@@ -18,6 +18,7 @@ exports.updateBooking = catchAsync(async (req, res, next) => {
 
   // 1. Find booking
   const booking = await Booking.findById(req.params.id);
+  if (!booking) return next(new AppError('Booking not found', NOT_FOUND));
 
   // // 2. Update tour maxGroupSize
   const tour = await Tour.findById(booking.tour);
