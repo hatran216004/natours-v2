@@ -15,6 +15,10 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Booking must have a pirce']
   },
+  participants: {
+    type: Number,
+    default: 1
+  },
   createdAt: {
     type: Date,
     default: Date.now()
