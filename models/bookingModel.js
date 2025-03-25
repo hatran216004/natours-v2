@@ -46,10 +46,15 @@ bookingSchema.index({ paymentId: 1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ user: 1, createdAt: -1 });
 
+bookingSchema.methods.calculateTourMaxGroupSize = (
+  currParticipants,
+  newParticipants
+) => newParticipants - currParticipants;
+
 bookingSchema.pre(/^find/, function (next) {
   this.populate({ path: 'user', select: 'name email photo' }).populate({
     path: 'tour',
-    select: 'name '
+    select: 'name'
   });
   next();
 });

@@ -3,6 +3,7 @@ const Tour = require('../models/tourModel');
 const Booking = require('../models/bookingModel');
 const AppError = require('../utils/appError');
 const axios = require('../config/axios');
+const { getAll, deleteOne } = require('./handlerFactory');
 const { NOT_FOUND } = require('../utils/constants');
 const catchAsync = require('../utils/catchAsync');
 
@@ -11,6 +12,35 @@ const createSignature = (rawSignature) =>
     .createHmac('sha256', process.env.MOMO_SECRET_KEY)
     .update(rawSignature)
     .digest('hex');
+
+exports.updateBooking = catchAsync(async (req, res, next) => {
+  const { participants } = req.body;
+
+  // 1. Find booking
+  const booking = await Booking.findById(req.params.id);
+
+  // // 2. Update tour maxGroupSize
+  const tour = await Tour.findById(booking.tour);
+  tour.maxGroupSize -= booking.calculateTourMaxGroupSize(
+    booking.participants,
+    participants
+  );
+  await tour.save();
+
+  // 3. Update booking
+  booking.participants = participants;
+  const newBooking = await booking.save();
+
+  res.status(200).json({
+    status: 'succes',
+    data: {
+      booking: newBooking
+    }
+  });
+});
+exports.getUserBookings = getAll(Booking);
+exports.getAllBookings = getAll(Booking);
+exports.deleteBooking = deleteOne(Booking);
 
 exports.checkoutSession = catchAsync(async (req, res, next) => {
   const tour = await Tour.findById(req.params.tourId);
@@ -23,7 +53,7 @@ exports.checkoutSession = catchAsync(async (req, res, next) => {
 
   if (process.env.NODE_ENV === 'development') {
     ipnUrl =
-      'https://4a09-14-191-93-139.ngrok-free.app/api/v2/bookings/callback';
+      'https://5eb8-14-191-93-139.ngrok-free.app/api/v2/bookings/callback';
   }
 
   const requestType = 'payWithMethod';
@@ -96,14 +126,20 @@ exports.momoCallBack = catchAsync(async (req, res, next) => {
 
   let booking;
   if (resultCode === 0) {
-    booking = await Booking.findOne({
-      paymentId: orderId,
-      status: 'pending'
-    });
-    booking.transactionId = transId;
-    booking.status = 'confirmed';
-    booking.paymentDate = new Date();
-    await booking.save();
+    booking = await Booking.findOneAndUpdate(
+      {
+        paymentId: orderId,
+        status: 'pending'
+      },
+      {
+        transactionId: transId,
+        status: 'confirmed',
+        paymentDate: new Date()
+      },
+      {
+        new: true
+      }
+    );
   } else {
     booking = await Booking.findOneAndUpdate(
       { paymentId: orderId },
@@ -145,7 +181,6 @@ exports.transactionStatus = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getPaymentHistory = catchAsync(async (req, res, next) => {});
 exports.retryPayment = catchAsync(async (req, res, next) => {});
 exports.cancelBooking = catchAsync(async (req, res, next) => {});
 

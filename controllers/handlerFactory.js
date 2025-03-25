@@ -11,6 +11,9 @@ exports.getAll = (Model) =>
     let filter = {};
     if (req.params.tourId) filter = { tour: req.params.tourId };
 
+    if (req.originalUrl.endsWith('/bookings/me'))
+      filter = { user: req.user.id };
+
     const features = new ApiFeatures(Model.find(filter), req.query)
       .filter()
       .sort()
@@ -20,12 +23,12 @@ exports.getAll = (Model) =>
     // Excute
     const [docs, totalDocuments] = await Promise.all([
       features.query,
-      Model.countDocuments()
+      Model.countDocuments(filter)
     ]);
 
     const modelName = Model.modelName.toLowerCase();
 
-    const totalPages = Math.ceil(
+    let totalPages = Math.ceil(
       totalDocuments / (parseInt(req.query.limit, 10) || PAGE_LIMIT)
     );
 
