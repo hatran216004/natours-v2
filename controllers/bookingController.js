@@ -4,7 +4,7 @@ const Booking = require('../models/bookingModel');
 const AppError = require('../utils/appError');
 const axios = require('../config/axios');
 const { getAll, deleteOne } = require('./handlerFactory');
-const { NOT_FOUND } = require('../utils/constants');
+const { NOT_FOUND, FORBIDDEN, BAD_REQUEST } = require('../utils/constants');
 const catchAsync = require('../utils/catchAsync');
 
 const createSignature = (rawSignature) =>
@@ -107,13 +107,12 @@ exports.checkoutSession = catchAsync(async (req, res, next) => {
     }
   });
 
-  const participants = req.body.participants ?? 1;
   await Booking.create({
     ...bookingData,
     price: amount,
     paymentMethod: 'momo',
     paymentId: orderId,
-    participants
+    ...req.body
   });
 
   res.status(200).json({
@@ -160,6 +159,52 @@ exports.momoCallBack = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.refundPayment = catchAsync(async (req, res, next) => {
+  const { refundAmount, refundReason } = req.body;
+  const { id } = req.params;
+  const booking = await Booking.findById(id);
+
+  if (!booking)
+    return next(new AppError('No booking found for refund!', NOT_FOUND));
+
+  if (booking.user.id !== req.user.id) {
+    return next(
+      new AppError('You can only retry your own bookings', FORBIDDEN)
+    );
+  }
+
+  if (booking.status !== 'confirmed') {
+    return next(
+      new AppError('Only confirmed bookings can be refund', BAD_REQUEST)
+    );
+  }
+
+  const refundOrderId = `REFUND_${booking.id}_${Date.now()}_${crypto.randomBytes(10).toString('hex')}`;
+
+  const rawSignature = `accessKey=${process.env.MOMO_ACCESS_KEY}&amount=${refundAmount}&description=${refundReason}&orderId=${refundOrderId}&partnerCode=MOMO&requestId=${refundOrderId}&transId=${booking.transactionId}`;
+  const signature = createSignature(rawSignature);
+
+  const requestBody = {
+    partnerCode: 'MOMO',
+    requestId: refundOrderId,
+    orderId: refundOrderId,
+    amount: refundAmount,
+    transId: booking.transactionId,
+    signature,
+    description: refundReason,
+    lang: 'vi'
+  };
+
+  const result = await axios.post('/api/refund', requestBody);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      data: result.data
+    }
+  });
+});
+
 exports.transactionStatus = catchAsync(async (req, res, next) => {
   const { orderId } = req.body;
   const rawSignature = `accessKey=${process.env.MOMO_ACCESS_KEY}&orderId=${orderId}&partnerCode=MOMO&requestId=${orderId}`;
@@ -182,7 +227,8 @@ exports.transactionStatus = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.retryPayment = catchAsync(async (req, res, next) => {});
-exports.cancelBooking = catchAsync(async (req, res, next) => {});
+exports.cancelBooking = catchAsync(async (req, res, next) => {
+  // const booking = await Booking.find();
+});
 
 // 0701234567

@@ -4,35 +4,22 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.get(
-  '/me',
-  authMiddleware.authenticateJWT,
-  bookingController.getUserBookings
-);
+router.use(authMiddleware.authenticateJWT);
 
-router.post(
-  '/payment/:tourId',
-  authMiddleware.authenticateJWT,
-  bookingController.checkoutSession
-);
+router.get('/me', bookingController.getUserBookings);
+
+router.post('/payment/:tourId', bookingController.checkoutSession);
 router.post('/callback', bookingController.momoCallBack);
-router.post(
-  '/transaction-status',
-  authMiddleware.authenticateJWT,
-  bookingController.transactionStatus
-);
+router.post('/transaction-status', bookingController.transactionStatus);
+router.post('/refund/:id', bookingController.refundPayment);
+router.post('/cancel/:id', bookingController.cancelBooking);
 
+// Admin & user
+router.use(authMiddleware.checkPermission('manage_bookings'));
+router.get('/', bookingController.getAllBookings);
 router
   .route('/:id')
   .patch(bookingController.updateBooking)
   .delete(bookingController.deleteBooking);
-
-// Admin
-router
-  .route('/')
-  .get(
-    authMiddleware.checkPermission('manage_bookings'),
-    bookingController.getAllBookings
-  );
 
 module.exports = router;
