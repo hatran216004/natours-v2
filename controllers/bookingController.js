@@ -58,9 +58,7 @@ exports.checkoutSession = catchAsync(async (req, res, next) => {
   }
 
   const requestType = 'payWithMethod';
-  const price = tour.priceDiscount
-    ? tour.price - tour.priceDiscount
-    : tour.price;
+  const price = tour.price - (tour.priceDiscount ?? 0);
   const bookingData = {
     tour: tour.id,
     user: req.user.id
@@ -195,7 +193,20 @@ exports.refundPayment = catchAsync(async (req, res, next) => {
     lang: 'vi'
   };
 
-  const result = await axios.post('/api/refund', requestBody);
+  let result;
+  try {
+    result = await axios.post('/api/refund', requestBody);
+    booking.status = 'refunded';
+    booking.price -= refundAmount;
+    await booking.save();
+  } catch (error) {
+    return next(
+      new AppError(
+        'The refund amount must be less than or equal to the order amount.',
+        BAD_REQUEST
+      )
+    );
+  }
 
   res.status(200).json({
     status: 'success',

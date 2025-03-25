@@ -4,12 +4,13 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
+router.post('/callback', bookingController.momoCallBack);
+
 router.use(authMiddleware.authenticateJWT);
 
 router.get('/me', bookingController.getUserBookings);
 
 router.post('/payment/:tourId', bookingController.checkoutSession);
-router.post('/callback', bookingController.momoCallBack);
 router.post('/transaction-status', bookingController.transactionStatus);
 router.post('/refund/:id', bookingController.refundPayment);
 router.post('/cancel/:id', bookingController.cancelBooking);
