@@ -77,7 +77,13 @@ const tourSchema = new Schema(
       required: [true, 'A tour must have a image cover']
     },
     images: [String],
-    startDates: [Date],
+    startDates: [
+      {
+        type: Date,
+        participants: { type: Number, default: 0 },
+        soldOut: { type: Boolean, default: false }
+      }
+    ],
     startLocation: {
       type: {
         type: String,
