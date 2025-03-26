@@ -42,6 +42,10 @@ const bookingSchema = new mongoose.Schema(
     specialRequirements: {
       type: String,
       trim: true
+    },
+    startDate: {
+      type: Date,
+      required: [true, 'Booking must have a start date']
     }
   },
   {
