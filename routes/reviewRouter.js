@@ -1,6 +1,7 @@
 const express = require('express');
 const reviewController = require('../controllers/reviewController');
 const authMiddleware = require('../middleware/authMiddleware');
+const Review = require('../models/reviewModel');
 
 // merge params với router cha(tourRouter) trong nested route
 const router = express.Router({ mergeParams: true });
@@ -20,6 +21,7 @@ router
   .route('/:id')
   .get(reviewController.getReview)
   .patch(
+    authMiddleware.checkIsUser(Review),
     authMiddleware.checkPermission('update_review'),
     reviewController.updateReview
   )

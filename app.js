@@ -61,6 +61,8 @@ app.use(
   })
 );
 
+app.options('*', cors());
+
 app.use(passport.initialize());
 
 /*

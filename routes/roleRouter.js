@@ -7,11 +7,10 @@ const router = express.Router();
 router.use(authMiddleware.authenticateJWT);
 router.use(authMiddleware.restrictTo('admin'));
 
-router.post('/:roleId/permissions', roleController.assignPermissionToRole);
-router.delete(
-  '/:roleId/permissions/:permissionId',
-  roleController.removePermissionFromRole
-);
+router
+  .route('/:roleId/permissions/:permissionId')
+  .post(roleController.assignPermissionToRole)
+  .delete(roleController.removePermissionFromRole);
 
 router
   .route('/')

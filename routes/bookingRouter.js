@@ -1,6 +1,7 @@
 const express = require('express');
 const bookingController = require('../controllers/bookingController');
 const authMiddleware = require('../middleware/authMiddleware');
+const Booking = require('../models/bookingModel');
 
 const router = express.Router();
 
@@ -12,15 +13,24 @@ router.get('/me', bookingController.getUserBookings);
 
 router.post('/payment/:tourId', bookingController.checkoutSession);
 router.post('/transaction-status', bookingController.transactionStatus);
-router.post('/refund/:id', bookingController.refundPayment);
-router.post('/cancel/:id', bookingController.cancelBooking);
+router.post(
+  '/refund/:id',
+  authMiddleware.checkIsUser(Booking),
+  bookingController.refundPayment
+);
 
-// Admin & user
-router.use(authMiddleware.checkPermission('manage_bookings'));
-router.get('/', bookingController.getAllBookings);
+// Admin & lead-guide
+router.get(
+  '/',
+  authMiddleware.checkPermission('manage_bookings'),
+  bookingController.getAllBookings
+);
 router
   .route('/:id')
   .patch(bookingController.updateBooking)
-  .delete(bookingController.deleteBooking);
+  .delete(
+    authMiddleware.checkPermission('manage_bookings'),
+    bookingController.deleteBooking
+  );
 
 module.exports = router;

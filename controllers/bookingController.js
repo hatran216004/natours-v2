@@ -4,7 +4,7 @@ const Booking = require('../models/bookingModel');
 const AppError = require('../utils/appError');
 const axios = require('../config/axios');
 const { getAll, deleteOne } = require('./handlerFactory');
-const { NOT_FOUND, FORBIDDEN, BAD_REQUEST } = require('../utils/constants');
+const { NOT_FOUND, BAD_REQUEST } = require('../utils/constants');
 const catchAsync = require('../utils/catchAsync');
 
 const createSignature = (rawSignature) =>
@@ -165,12 +165,6 @@ exports.refundPayment = catchAsync(async (req, res, next) => {
   if (!booking)
     return next(new AppError('No booking found for refund!', NOT_FOUND));
 
-  if (booking.user.id !== req.user.id) {
-    return next(
-      new AppError('You can only retry your own bookings', FORBIDDEN)
-    );
-  }
-
   if (booking.status !== 'confirmed') {
     return next(
       new AppError('Only confirmed bookings can be refund', BAD_REQUEST)
@@ -197,7 +191,7 @@ exports.refundPayment = catchAsync(async (req, res, next) => {
   try {
     result = await axios.post('/api/refund', requestBody);
     booking.status = 'refunded';
-    booking.price -= refundAmount;
+    booking.price = Math.max(0, booking.price - refundAmount);
     await booking.save();
   } catch (error) {
     return next(
@@ -236,10 +230,6 @@ exports.transactionStatus = catchAsync(async (req, res, next) => {
       data: result.data
     }
   });
-});
-
-exports.cancelBooking = catchAsync(async (req, res, next) => {
-  // const booking = await Booking.find();
 });
 
 // 0701234567

@@ -7,12 +7,11 @@ exports.createRole = createOne(Role);
 exports.deleteRole = deleteOne(Role);
 
 exports.assignPermissionToRole = catchAsync(async (req, res, next) => {
-  const { permission } = req.body; // permissionId
-  const { roleId } = req.params;
+  const { roleId, permissionId } = req.params;
 
   const role = await Role.findByIdAndUpdate(
     roleId,
-    { $addToSet: { permissions: permission } },
+    { $addToSet: { permissions: permissionId } },
     {
       new: true
     }

@@ -7,6 +7,19 @@ const catchAsync = require('../utils/catchAsync');
 const { UNAUTHORIZED, FORBIDDEN } = require('../utils/constants');
 const { verifyAccessToken } = require('../utils/jwt');
 
+exports.checkIsUser = (Model) =>
+  catchAsync(async (req, res, next) => {
+    const doc = await Model.findById(req.params.id);
+    if (doc.user.id !== req.user.id)
+      return next(
+        new AppError(
+          `You don't have permission to perform this action`,
+          FORBIDDEN
+        )
+      );
+    next();
+  });
+
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role.name)) {
