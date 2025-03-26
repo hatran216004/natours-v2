@@ -13,6 +13,34 @@ const createSignature = (rawSignature) =>
     .update(rawSignature)
     .digest('hex');
 
+exports.getBookingStatus = catchAsync(async (req, res, next) => {
+  const stats = await Booking.aggregate([
+    {
+      $group: {
+        _id: '$status',
+        nums: { $sum: 1 }
+      }
+    },
+    {
+      $addFields: {
+        status: '$_id'
+      }
+    },
+    {
+      $project: {
+        _id: 0
+      }
+    }
+  ]);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      stats
+    }
+  });
+});
+
 exports.updateBooking = catchAsync(async (req, res, next) => {
   const { participants } = req.body;
 

@@ -25,6 +25,7 @@ router.get(
   authMiddleware.checkPermission('manage_bookings'),
   bookingController.getAllBookings
 );
+router.get('/status', bookingController.getBookingStatus);
 router
   .route('/:id')
   .patch(bookingController.updateBooking)
