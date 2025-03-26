@@ -2,10 +2,12 @@ const express = require('express');
 const tourController = require('../controllers/tourController');
 const authMiddleware = require('../middleware/authMiddleware');
 const reviewRouter = require('./reviewRouter');
+const bookingRouter = require('./bookingRouter');
 
 const router = express.Router(); // tạo ra 1 middleware router(tourRouter)
 // Moute router con (reviewRouter) vào router cha tourRouter
 router.use('/:tourId/reviews', reviewRouter);
+router.use('/:tourId/bookings', bookingRouter);
 
 // Điền trước query params vào url
 router

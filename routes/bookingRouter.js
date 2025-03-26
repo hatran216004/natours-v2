@@ -3,7 +3,7 @@ const bookingController = require('../controllers/bookingController');
 const authMiddleware = require('../middleware/authMiddleware');
 const Booking = require('../models/bookingModel');
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router.post('/callback', bookingController.momoCallBack);
 

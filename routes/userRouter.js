@@ -2,8 +2,10 @@ const express = require('express');
 const userController = require('../controllers/userController');
 const authController = require('../controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
+const bookingRouter = require('./bookingRouter');
 
 const router = express.Router(); // tạo ra 1 middleware router(userRouter)
+router.use('/:userId/bookings', bookingRouter);
 
 // User
 router.post('/signup', authController.signup);

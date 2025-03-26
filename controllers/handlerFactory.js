@@ -10,6 +10,7 @@ exports.getAll = (Model) =>
     // Lọc đối với nested route review
     let filter = {};
     if (req.params.tourId) filter = { tour: req.params.tourId };
+    if (req.params.userId) filter = { user: req.params.userId };
 
     if (req.originalUrl.endsWith('/bookings/me'))
       filter = { user: req.user.id };
