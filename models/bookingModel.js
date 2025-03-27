@@ -58,10 +58,24 @@ bookingSchema.index({ paymentId: 1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ user: 1, createdAt: -1 });
 
-bookingSchema.methods.calculateTourMaxGroupSize = (
-  currParticipants,
-  newParticipants
-) => newParticipants - currParticipants;
+bookingSchema.methods.updateTourParticipants = async function (
+  participantsUpdated,
+  tour,
+  startDate,
+  type
+) {
+  const dateSelected = tour.startDates.find(
+    (d) => d.date.getTime() === startDate.getTime()
+  );
+  if (type === 'create') dateSelected.participants += participantsUpdated;
+  else {
+    dateSelected.participants -= participantsUpdated;
+  }
+
+  if (dateSelected.participants >= tour.maxGroupSize)
+    dateSelected.soldOut = true;
+  await tour.save();
+};
 
 bookingSchema.pre(/^find/, function (next) {
   this.populate({ path: 'user', select: 'name email photo' }).populate({

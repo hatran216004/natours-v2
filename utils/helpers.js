@@ -12,3 +12,9 @@ exports.filterObj = (obj, ...allowedFields) => {
   });
   return newObj;
 };
+
+exports.createSignature = (rawSignature) =>
+  crypto
+    .createHmac('sha256', process.env.MOMO_SECRET_KEY)
+    .update(rawSignature)
+    .digest('hex');

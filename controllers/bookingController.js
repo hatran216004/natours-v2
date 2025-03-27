@@ -6,12 +6,11 @@ const axios = require('../config/axios');
 const { getAll, deleteOne } = require('./handlerFactory');
 const { NOT_FOUND, BAD_REQUEST } = require('../utils/constants');
 const catchAsync = require('../utils/catchAsync');
+const { createSignature } = require('../utils/helpers');
 
-const createSignature = (rawSignature) =>
-  crypto
-    .createHmac('sha256', process.env.MOMO_SECRET_KEY)
-    .update(rawSignature)
-    .digest('hex');
+exports.getUserBookings = getAll(Booking);
+exports.getAllBookings = getAll(Booking);
+exports.deleteBooking = deleteOne(Booking);
 
 exports.getBookingStatus = catchAsync(async (req, res, next) => {
   const stats = await Booking.aggregate([
@@ -43,22 +42,24 @@ exports.getBookingStatus = catchAsync(async (req, res, next) => {
 
 exports.updateBooking = catchAsync(async (req, res, next) => {
   const { participants } = req.body;
-
   // 1. Find booking
   const booking = await Booking.findById(req.params.id);
   if (!booking) return next(new AppError('Booking not found', NOT_FOUND));
 
-  // // 2. Update tour maxGroupSize
+  // // 2. Update tour participants
   const tour = await Tour.findById(booking.tour);
-  tour.maxGroupSize -= booking.calculateTourMaxGroupSize(
-    booking.participants,
-    participants
-  );
-  await tour.save();
-
+  const participantsUpdated = booking.participants - participants;
   // 3. Update booking
   booking.participants = participants;
-  const newBooking = await booking.save();
+  const [newBooking] = await Promise.all([
+    booking.save(),
+    booking.updateTourParticipants(
+      participantsUpdated,
+      tour,
+      booking.startDate,
+      'update'
+    )
+  ]);
 
   res.status(200).json({
     status: 'succes',
@@ -67,9 +68,6 @@ exports.updateBooking = catchAsync(async (req, res, next) => {
     }
   });
 });
-exports.getUserBookings = getAll(Booking);
-exports.getAllBookings = getAll(Booking);
-exports.deleteBooking = deleteOne(Booking);
 
 exports.checkoutSession = catchAsync(async (req, res, next) => {
   const tour = await Tour.findById(req.params.tourId);
@@ -82,7 +80,7 @@ exports.checkoutSession = catchAsync(async (req, res, next) => {
 
   if (process.env.NODE_ENV === 'development') {
     ipnUrl =
-      'https://5eb8-14-191-93-139.ngrok-free.app/api/v2/bookings/callback';
+      'https://cadc-14-191-93-139.ngrok-free.app/api/v2/bookings/callback';
   }
 
   const requestType = 'payWithMethod';
@@ -133,13 +131,19 @@ exports.checkoutSession = catchAsync(async (req, res, next) => {
     }
   });
 
-  await Booking.create({
+  const booking = await Booking.create({
     ...bookingData,
     price: amount,
     paymentMethod: 'momo',
     paymentId: orderId,
     ...req.body
   });
+  await booking.updateTourParticipants(
+    req.body.participants,
+    tour,
+    booking.startDate,
+    'create'
+  );
 
   res.status(200).json({
     status: 'success',

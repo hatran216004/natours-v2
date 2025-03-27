@@ -79,7 +79,7 @@ const tourSchema = new Schema(
     images: [String],
     startDates: [
       {
-        type: Date,
+        date: Date,
         participants: { type: Number, default: 0 },
         soldOut: { type: Boolean, default: false }
       }

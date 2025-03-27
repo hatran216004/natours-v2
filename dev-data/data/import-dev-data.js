@@ -33,10 +33,10 @@ mongoose.connect(DB).then(() => {
 
 const importData = async () => {
   try {
-    // await Tour.create(tours);
-    await User.create(users, {
-      validateBeforeSave: false
-    });
+    await Tour.create(tours);
+    // await User.create(users, {
+    //   validateBeforeSave: false
+    // });
     // await Review.create(reviews);
 
     // // import roles & permissions
@@ -65,7 +65,8 @@ const importData = async () => {
 
 const deleteData = async () => {
   try {
-    await User.deleteMany();
+    // await User.deleteMany();
+    await Tour.deleteMany();
     console.log('Data deleted 😊');
     process.exit();
   } catch (error) {
