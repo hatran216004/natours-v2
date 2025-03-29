@@ -34,7 +34,13 @@ if (process.env.NODE_ENV === 'development') {
 // Giới hạn tối đa số lượng request từ mỗi IP
 // app.use('/api', limiter);
 
-app.use(express.static(path.join(__dirname, 'public'))); // middleware để phục vụ các static files từ folder public
+app.use(
+  express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res) => {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    }
+  })
+); // middleware để phục vụ các static files từ folder public
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
