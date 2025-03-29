@@ -212,7 +212,6 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
     );
   }
 
-  await setTokenBlacklist(oldRefreshToken, 'refresh');
   const decoded = await verifyRefreshToken(oldRefreshToken);
   const isBlacklisted = await client.get(
     `bl_refresh_${decoded.id}_${decoded.jti}`
@@ -221,8 +220,8 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
     return next(new AppError('Token revoked', UNAUTHORIZED));
   }
 
+  await setTokenBlacklist(oldRefreshToken, 'refresh');
   const { accessToken, refreshToken } = generateTokens(decoded.id);
-
   setTokenCookie(res, refreshToken);
 
   res.status(200).json({
