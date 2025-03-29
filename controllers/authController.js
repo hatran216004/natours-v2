@@ -17,6 +17,7 @@ const {
   MAX_ATTEMPTS,
   LOCK_TIME
 } = require('../utils/constants');
+const client = require('../redisClient');
 
 const setTokenCookie = (res, refreshToken) => {
   const cookieOptions = {
@@ -213,6 +214,12 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
 
   await setTokenBlacklist(oldRefreshToken, 'refresh');
   const decoded = await verifyRefreshToken(oldRefreshToken);
+  const isBlacklisted = await client.get(
+    `bl_refresh_${decoded.id}_${decoded.jti}`
+  );
+  if (isBlacklisted) {
+    return next(new AppError('Token revoked', UNAUTHORIZED));
+  }
 
   const { accessToken, refreshToken } = generateTokens(decoded.id);
 
