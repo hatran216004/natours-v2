@@ -22,7 +22,7 @@ const client = require('../redisClient');
 const setTokenCookie = (res, refreshToken) => {
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    // secure: process.env.NODE_ENV === 'production',
     maxAge: process.env.COOKIE_REFRESH_TOKEN_EXPIRES_IN * 60 * 60 * 1000
   };
   res.cookie('token', refreshToken, cookieOptions);
