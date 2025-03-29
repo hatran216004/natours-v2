@@ -49,8 +49,7 @@ const userSchema = new mongoose.Schema({
   passwordResetExpires: Date,
   active: {
     type: Boolean,
-    default: true,
-    select: false
+    default: true
   },
   failedAttempts: {
     // Số lần đăng nhập thất bại
