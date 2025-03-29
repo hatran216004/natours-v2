@@ -36,7 +36,7 @@ exports.getAll = (Model) =>
     res.status(200).json({
       status: 'success',
       data: {
-        [modelName]: docs
+        [`${modelName}s`]: docs
       },
       pagination: { total: totalDocuments, totalPages }
     });
