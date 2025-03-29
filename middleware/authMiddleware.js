@@ -106,7 +106,10 @@ exports.authenticateJWT = catchAsync(async (req, res, next) => {
 
     if (!user) {
       return next(
-        new AppError('Invalid token. Please log in again!', UNAUTHORIZED)
+        new AppError(
+          'Token invalid or has been expires. Please log in again!',
+          UNAUTHORIZED
+        )
       );
     }
     req.user = user;

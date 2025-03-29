@@ -11,7 +11,8 @@ exports.generateTokens = (id) => {
     { id, jti: uuidv4() },
     process.env.JWT_ACCESS_TOKEN_SECRET,
     {
-      expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN
+      // expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN,
+      expiresIn: 30
     }
   );
   const refreshToken = jwt.sign(
