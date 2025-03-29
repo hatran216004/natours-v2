@@ -14,11 +14,11 @@ router.patch('/refresh-token', authController.refreshToken);
 
 router.post('/forgot-password', authController.forgotPassword);
 router.patch('/reset-password/:token', authController.resetPassword);
+router.post('/logout', authController.logout);
 
 // -- Protect all routes after this middleware
 router.use(authMiddleware.authenticateJWT);
 
-router.post('/logout', authController.logout);
 router.patch('/update-my-password/', authController.updatePassword);
 router.get('/me', userController.getMe);
 router.patch(
