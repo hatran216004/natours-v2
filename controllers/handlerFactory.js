@@ -15,6 +15,10 @@ exports.getAll = (Model) =>
     if (req.originalUrl.endsWith('/bookings/me'))
       filter = { user: req.user.id };
 
+    const totalDocuments = await Model.countDocuments(
+      new ApiFeatures(Model.find(filter), req.query).filter().query.getQuery()
+    );
+
     const features = new ApiFeatures(Model.find(filter), req.query)
       .filter()
       .sort()
@@ -22,10 +26,7 @@ exports.getAll = (Model) =>
       .paginate();
 
     // Excute
-    const [docs, totalDocuments] = await Promise.all([
-      features.query,
-      Model.countDocuments(filter)
-    ]);
+    const docs = await features.query;
 
     const modelName = Model.modelName.toLowerCase();
 
