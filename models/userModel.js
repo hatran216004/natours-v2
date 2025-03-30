@@ -91,9 +91,7 @@ userSchema.pre('save', async function (next) {
 });
 
 userSchema.pre(/^find/, function (next) {
-  this.find({ active: { $ne: false } })
-    .select('-__v')
-    .populate({ path: 'role', select: '-__v -permissions' });
+  this.select('-__v').populate({ path: 'role', select: '-__v -permissions' });
   next();
 });
 
