@@ -3,14 +3,8 @@ const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { filterObj } = require('../utils/helpers');
-const { BAD_REQUEST } = require('../utils/constants');
-const {
-  deleteOne,
-  updateOne,
-  getOne,
-  getAll,
-  createOne
-} = require('./handlerFactory');
+const { BAD_REQUEST, NOT_FOUND } = require('../utils/constants');
+const { deleteOne, getOne, getAll, createOne } = require('./handlerFactory');
 const { upload } = require('../middleware/fileUploadMiddleware');
 
 exports.uploadUserPhoto = upload.single('photo');
@@ -32,8 +26,20 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
 exports.getAllUsers = getAll(User);
 exports.getUser = getOne(User);
 exports.createUser = createOne(User);
-exports.updateUser = updateOne(User);
 exports.deleteUser = deleteOne(User);
+
+exports.updateUser = catchAsync(async (req, res, next) => {
+  const user = await User.findByIdAndUpdate(req.id, req.body);
+
+  if (!user) return next(new AppError('No user found with that ID', NOT_FOUND));
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user
+    }
+  });
+});
 
 exports.searchUsers = catchAsync(async (req, res, next) => {
   const { key } = req.params;

@@ -107,22 +107,16 @@ exports.updateOne = (Model, filterOpts) =>
     let filteredBody = { ...req.body };
     if (filterOpts) filteredBody = filterObj(req.body, ...filterOpts);
 
-    const doc = await Model.findById(req.params.id);
-
-    if (!doc)
-      return next(new AppError('No document found with that ID', NOT_FOUND));
-
-    Object.keys(filteredBody).forEach((key) => {
-      doc[key] = filteredBody[key];
+    const doc = await Model.findByIdAndUpdate(req.params.id, filteredBody, {
+      new: true,
+      runValidators: true
     });
-    const updatedDoc = await doc.save();
-
     const modelName = Model.modelName.toLowerCase();
 
     res.status(200).json({
       status: 'success',
       data: {
-        [modelName]: updatedDoc
+        [modelName]: doc
       }
     });
   });
