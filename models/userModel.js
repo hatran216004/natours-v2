@@ -5,64 +5,69 @@ const bcrypt = require('bcryptjs');
 const { hashToken } = require('../utils/helpers');
 const Role = require('./roleModel');
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Please enter your name']
-  },
-  email: {
-    type: String,
-    required: [true, 'Please enter tour email address'],
-    unique: true,
-    lowercase: true,
-    validate: {
-      validator: validator.isEmail,
-      message: 'Please enter a valid email'
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'Please enter your name']
+    },
+    email: {
+      type: String,
+      required: [true, 'Please enter tour email address'],
+      unique: true,
+      lowercase: true,
+      validate: {
+        validator: validator.isEmail,
+        message: 'Please enter a valid email'
+      }
+    },
+    photo: {
+      type: String,
+      default: 'default.jpg'
+    },
+    password: {
+      type: String,
+      required: [true, 'Please enter a password'],
+      minlength: [8, 'Password need at least 8 characters'],
+      select: false
+    },
+    passwordConfirm: {
+      type: String,
+      required: [true, 'Please enter confirm password'],
+      validate: {
+        validator: function (val) {
+          return val === this.password; // this chỉ chạy trên .save() và .create()
+        },
+        message: 'Password and confirm password does not match'
+      }
+    },
+    role: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Role'
+    },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
+    active: {
+      type: Boolean,
+      default: true
+    },
+    failedAttempts: {
+      // Số lần đăng nhập thất bại
+      type: Number,
+      default: 0,
+      select: false
+    },
+    lockUntil: {
+      type: Date, // Thời gian bị khóa tài khoản
+      default: null,
+      select: false
     }
   },
-  photo: {
-    type: String,
-    default: 'default.jpg'
-  },
-  password: {
-    type: String,
-    required: [true, 'Please enter a password'],
-    minlength: [8, 'Password need at least 8 characters'],
-    select: false
-  },
-  passwordConfirm: {
-    type: String,
-    required: [true, 'Please enter confirm password'],
-    validate: {
-      validator: function (val) {
-        return val === this.password; // this chỉ chạy trên .save() và .create()
-      },
-      message: 'Password and confirm password does not match'
-    }
-  },
-  role: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Role'
-  },
-  passwordChangedAt: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
-  active: {
-    type: Boolean,
-    default: true
-  },
-  failedAttempts: {
-    // Số lần đăng nhập thất bại
-    type: Number,
-    default: 0,
-    select: false
-  },
-  lockUntil: {
-    type: Date, // Thời gian bị khóa tài khoản
-    default: null,
-    select: false
+  {
+    timestamps: true
   }
-});
+);
 
 // MIDDLEWARE
 userSchema.pre('save', async function (next) {
