@@ -37,9 +37,9 @@ exports.getAll = (Model) =>
     res.status(200).json({
       status: 'success',
       data: {
-        [`${modelName}s`]: docs
-      },
-      pagination: { total: totalDocuments, totalPages }
+        [`${modelName}s`]: docs,
+        pagination: { total: totalDocuments, totalPages }
+      }
     });
   });
 
@@ -68,12 +68,12 @@ exports.getOne = (Model, popOptions) =>
 
       return res.status(200).json({
         status: 'success',
-        pagination: {
-          total: totalReviews,
-          totalPages
-        },
         data: {
-          [modelName]: docs
+          [modelName]: docs,
+          pagination: {
+            total: totalReviews,
+            totalPages
+          }
         }
       });
     }
