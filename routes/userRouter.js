@@ -15,6 +15,7 @@ router.patch('/refresh-token', authController.refreshToken);
 router.post('/forgot-password', authController.forgotPassword);
 router.patch('/reset-password/:token', authController.resetPassword);
 router.post('/logout', authController.logout);
+router.get('/search/:key', userController.searchUsers);
 
 // -- Protect all routes after this middleware
 router.use(authMiddleware.authenticateJWT);
@@ -37,7 +38,10 @@ router.delete(
 // Quản trị viên
 router.use(authMiddleware.checkPermission('manage_users'));
 
-router.route('/').get(userController.getAllUsers);
+router
+  .route('/')
+  .get(userController.getAllUsers)
+  .post(userController.createUser);
 router
   .route('/:id')
   .get(userController.getUser)

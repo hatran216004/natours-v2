@@ -63,7 +63,7 @@ exports.deleteTour = deleteOne(Tour);
 
 exports.searchTours = catchAsync(async (req, res, next) => {
   const { key } = req.params;
-  const { page = 1, limit = 3 } = req.query;
+  const { page = 1, limit = 6 } = req.query;
 
   // Điều kiện tìm kiếm
   const filter = {
@@ -78,17 +78,17 @@ exports.searchTours = catchAsync(async (req, res, next) => {
 
   const [tours, totalDocuments] = await Promise.all([
     Tour.find(filter).skip(skip).limit(parseInt(limit, 10)),
-    Tour.countDocuments()
+    Tour.countDocuments(filter)
   ]);
+
+  const totalPages = Math.ceil(totalDocuments / limit);
+
   res.status(200).json({
     status: 'success',
     data: {
-      result: tours.length,
       tours
     },
-    pagination: {
-      totalDocuments
-    }
+    pagination: { total: totalDocuments, totalPages }
   });
 });
 
