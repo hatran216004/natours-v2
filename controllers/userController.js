@@ -29,7 +29,9 @@ exports.createUser = createOne(User);
 exports.deleteUser = deleteOne(User);
 
 exports.updateUser = catchAsync(async (req, res, next) => {
-  const user = await User.findByIdAndUpdate(req.id, req.body, { new: true });
+  const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    new: true
+  });
 
   if (!user) return next(new AppError('No user found with that ID', NOT_FOUND));
 
