@@ -57,11 +57,13 @@ exports.getAllTours = getAll(Tour);
 exports.getTour = getOne(Tour, { path: 'reviews', select: '-__v' });
 exports.updateTour = updateOne(Tour);
 exports.deleteTour = deleteOne(Tour);
+
 exports.createTour = catchAsync(async (req, res, next) => {
   req.body.startLocation = JSON.parse(req.body.startLocation);
   req.body.guides = JSON.parse(req.body.guides);
   req.body.startDates = JSON.parse(req.body.startDates);
-  req.body.locations = JSON.parse(req.body.locations);
+
+  if (req.body.locations) req.body.locations = JSON.parse(req.body.locations);
   const doc = await Tour.create(req.body);
 
   res.status(201).json({
