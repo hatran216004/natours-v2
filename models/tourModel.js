@@ -154,8 +154,10 @@ tourSchema.pre('save', function (next) {
 });
 
 tourSchema.pre('save', function (next) {
-  this.images = this.images.map((image) => image.replace('undefined', this.id));
-  this.imageCover = this.imageCover.replace('undefined', this.id);
+  this.images = this.images.map((image) =>
+    image.replace('undefined', Date.now())
+  );
+  this.imageCover = this.imageCover.replace('undefined', Date.now());
   next();
 });
 
