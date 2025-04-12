@@ -37,7 +37,7 @@ router.delete(
 
 // Quản trị viên
 router.use(authMiddleware.checkPermission('manage_users'));
-
+router.get('/guides', userController.getAllGuides);
 router
   .route('/')
   .get(userController.getAllUsers)

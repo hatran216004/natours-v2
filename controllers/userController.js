@@ -6,6 +6,7 @@ const { filterObj } = require('../utils/helpers');
 const { BAD_REQUEST, NOT_FOUND } = require('../utils/constants');
 const { deleteOne, getOne, getAll, createOne } = require('./handlerFactory');
 const { upload } = require('../middleware/fileUploadMiddleware');
+const Role = require('../models/roleModel');
 
 exports.uploadUserPhoto = upload.single('photo');
 
@@ -39,6 +40,26 @@ exports.updateUser = catchAsync(async (req, res, next) => {
     status: 'success',
     data: {
       user
+    }
+  });
+});
+
+exports.getAllGuides = catchAsync(async (req, res, next) => {
+  const role = await Role.find({ name: { $in: ['guide', 'lead-guide'] } });
+
+  if (!role) return next(new AppError('No doucuments found', 404));
+
+  const roleIds = role.map((r) => r.id);
+
+  const guides = await User.find({ role: { $in: roleIds } });
+
+  if (!guides) return next(new AppError('No doucuments found', 404));
+
+  res.status(200).json({
+    status: 'success',
+    result: guides.length,
+    data: {
+      guides
     }
   });
 });
