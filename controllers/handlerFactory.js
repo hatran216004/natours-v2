@@ -123,15 +123,6 @@ exports.updateOne = (Model, filterOpts) =>
 
 exports.createOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    if (req.body.startLocation)
-      req.body.startLocation = JSON.parse(req.body.startLocation);
-
-    if (req.body.startDates)
-      req.body.startDates = JSON.parse(req.body.startDates);
-
-    if (req.body.locations) {
-      req.body.locations = JSON.parse(req.body.locations);
-    }
     const doc = await Model.create(req.body);
     const modelName = Model.modelName.toLowerCase();
 
