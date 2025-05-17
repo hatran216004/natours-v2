@@ -105,6 +105,14 @@ exports.deleteOne = (Model) =>
 exports.updateOne = (Model, filterOpts) =>
   catchAsync(async (req, res, next) => {
     let filteredBody = { ...req.body };
+    if (filteredBody.startDates) {
+      filteredBody.startDates = JSON.parse(filteredBody.startDates);
+    }
+
+    if (filteredBody.startLocation) {
+      filteredBody.startLocation = JSON.parse(filteredBody.startLocation);
+    }
+
     if (filterOpts) filteredBody = filterObj(req.body, ...filterOpts);
 
     const doc = await Model.findByIdAndUpdate(req.params.id, filteredBody, {
