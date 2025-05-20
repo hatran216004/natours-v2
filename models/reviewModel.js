@@ -38,12 +38,7 @@ const reviewSchema = new mongoose.Schema(
 reviewSchema.index({ rating: 1 });
 
 reviewSchema.pre(/^find/, function (next) {
-  // console.log('review query middleware');
-  // this.populate('user', 'name photo').populate({
-  //   path: 'tour',
-  //   select: 'name'
-  // });
-  this.populate('user', 'name photo');
+  this.populate('user', 'name photo').populate('tour', 'name');
   next();
 });
 
