@@ -1,7 +1,5 @@
 const crypto = require('crypto');
 const cloudinary = require('../config/cloudinary');
-const AppError = require('./appError');
-const { SERVER_ERROR } = require('./constants');
 
 exports.hashToken = (token) =>
   crypto.createHash('sha256').update(token).digest('hex');
@@ -22,12 +20,14 @@ exports.createSignature = (rawSignature) =>
     .update(rawSignature)
     .digest('hex');
 
-exports.uploadToCloudinary = async (byteArrayBuffer, folder) => {
-  new Promise((resolve, reject) => {
+exports.uploadToCloudinary = async (byteArrayBuffer, filename, folder) => {
+  const publicId = `${filename.replace('.jpg', '')}-${Date.now()}`;
+  return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
         {
-          folder
+          folder,
+          public_id: publicId
         },
         (error, result) => {
           if (error) reject(error);
@@ -35,7 +35,5 @@ exports.uploadToCloudinary = async (byteArrayBuffer, folder) => {
         }
       )
       .end(byteArrayBuffer);
-  }).catch((error) => {
-    throw new AppError('Failed to upload image', SERVER_ERROR);
   });
 };

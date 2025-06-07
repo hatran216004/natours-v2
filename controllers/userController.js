@@ -19,8 +19,12 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
     .jpeg({ quality: 90 })
     .toBuffer();
 
-  const result = await uploadToCloudinary(byteArrayBuffer, 'users');
-  req.file.filename = result.public_id;
+  const result = await uploadToCloudinary(
+    byteArrayBuffer,
+    req.file.filename,
+    'users'
+  );
+  req.file.filename = result.public_id.replace('users/', '');
   next();
 });
 

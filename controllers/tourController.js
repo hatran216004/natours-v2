@@ -14,14 +14,15 @@ exports.uploadTourImages = upload.fields([
 
 exports.resizeTourImages = catchAsync(async (req, res, next) => {
   if (req.files?.imageCover) {
+    const filename = req.files.imageCover[0].fieldname;
     const byteArrayBuffer = await sharp(req.files.imageCover[0].buffer)
       .resize(2000, 1333)
       .toFormat('jpeg')
       .jpeg({ quality: 90 })
       .toBuffer();
 
-    const result = await uploadToCloudinary(byteArrayBuffer, 'tours');
-    req.body.imageCover = result.public_id;
+    const result = await uploadToCloudinary(byteArrayBuffer, filename, 'tours');
+    req.body.imageCover = result.public_id.replace('tours/', '');
   }
 
   if (req.files?.images) {
@@ -32,8 +33,12 @@ exports.resizeTourImages = catchAsync(async (req, res, next) => {
           .toFormat('jpeg')
           .jpeg({ quality: 90 })
           .toBuffer();
-        const result = await uploadToCloudinary(byteArrayBuffer, 'tours');
-        const filename = result.public_id;
+        const result = await uploadToCloudinary(
+          byteArrayBuffer,
+          file.fieldname,
+          'tours'
+        );
+        const filename = result.public_id.replace('tours/', '');
         return filename;
       })
     );
