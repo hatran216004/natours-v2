@@ -18,6 +18,8 @@ const reviewRouter = require('./routes/reviewRouter');
 const roleRouter = require('./routes/roleRouter');
 const bookingRouter = require('./routes/bookingRouter');
 const permissionRouter = require('./routes/permissionRouter');
+const messageRouter = require('./routes/messageRouter');
+const conversationRouter = require('./routes/conversationRouter');
 const globalErrorHandler = require('./controllers/errorController');
 // const limiter = require('./middleware/rateLimitMiddleware');
 
@@ -92,6 +94,8 @@ app.use('/api/v2/bookings', bookingRouter);
 app.use('/api/v2/reviews', reviewRouter);
 app.use('/api/v2/roles', roleRouter);
 app.use('/api/v2/permissions', permissionRouter);
+app.use('/api/v2/messages', messageRouter);
+app.use('/api/v2/conversations', conversationRouter);
 
 // Hanlde error unhanlded routes
 app.all('*', (req, res, next) => {

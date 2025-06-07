@@ -5,6 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const { BAD_REQUEST } = require('../utils/constants');
 const { deleteOne, updateOne, getAll, getOne } = require('./handlerFactory');
 const { upload } = require('../middleware/fileUploadMiddleware');
+const { uploadToCloudinary } = require('../utils/helpers');
 
 exports.uploadTourImages = upload.fields([
   { name: 'imageCover', maxCount: 1 },
@@ -13,30 +14,26 @@ exports.uploadTourImages = upload.fields([
 
 exports.resizeTourImages = catchAsync(async (req, res, next) => {
   if (req.files?.imageCover) {
-    // 1. imageCover
-    req.body.imageCover = req.params.id
-      ? `tour-${req.params.id}-${Date.now()}-cover.jpeg`
-      : `tour-${Date.now()}-cover.jpeg`;
-    await sharp(req.files.imageCover[0].buffer)
+    const byteArrayBuffer = await sharp(req.files.imageCover[0].buffer)
       .resize(2000, 1333)
       .toFormat('jpeg')
       .jpeg({ quality: 90 })
-      .toFile(`public/img/tours/${req.body.imageCover}`);
+      .toBuffer();
+
+    const result = await uploadToCloudinary(byteArrayBuffer, 'tours');
+    req.body.imageCover = result.public_id;
   }
 
   if (req.files?.images) {
-    // 2. images
     req.body.images = await Promise.all(
-      req.files.images.map(async (file, index) => {
-        const filename = req.params.id
-          ? `tour-${req.params.id}-${Date.now()}-${index + 1}.jpeg`
-          : `tour-${Date.now()}-${index + 1}.jpeg`;
-        await sharp(file.buffer)
+      req.files.images.map(async (file) => {
+        const byteArrayBuffer = await sharp(file.buffer)
           .resize(2000, 1333)
           .toFormat('jpeg')
           .jpeg({ quality: 90 })
-          .toFile(`public/img/tours/${filename}`);
-
+          .toBuffer();
+        const result = await uploadToCloudinary(byteArrayBuffer, 'tours');
+        const filename = result.public_id;
         return filename;
       })
     );

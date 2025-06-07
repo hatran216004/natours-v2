@@ -21,5 +21,10 @@ const conversationSchema = new mongoose.Schema(
   }
 );
 
+conversationSchema.pre('find', function (next) {
+  this.populate('participants', 'name email photo');
+  next();
+});
+
 const Conversation = mongoose.model('Conversation', conversationSchema);
 module.exports = Conversation;

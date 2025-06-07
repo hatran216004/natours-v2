@@ -2,7 +2,7 @@ const sharp = require('sharp');
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const { filterObj } = require('../utils/helpers');
+const { filterObj, uploadToCloudinary } = require('../utils/helpers');
 const { BAD_REQUEST, NOT_FOUND } = require('../utils/constants');
 const { deleteOne, getOne, getAll, createOne } = require('./handlerFactory');
 const { upload } = require('../middleware/fileUploadMiddleware');
@@ -13,14 +13,14 @@ exports.uploadUserPhoto = upload.single('photo');
 exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
   if (!req.file) return next();
 
-  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
-
-  await sharp(req.file.buffer)
+  const byteArrayBuffer = await sharp(req.file.buffer)
     .resize(500, 500)
     .toFormat('jpeg')
     .jpeg({ quality: 90 })
-    .toFile(`public/img/users/${req.file.filename}`);
+    .toBuffer();
 
+  const result = await uploadToCloudinary(byteArrayBuffer, 'users');
+  req.file.filename = result.public_id;
   next();
 });
 
@@ -66,7 +66,15 @@ exports.getAllGuides = catchAsync(async (req, res, next) => {
 
 exports.searchUsers = catchAsync(async (req, res, next) => {
   const { key } = req.params;
-  const { page = 1, limit = 6 } = req.query;
+
+  if (!key) {
+    res.status(200).json({
+      status: 'success',
+      data: {
+        users: []
+      }
+    });
+  }
 
   // Điều kiện tìm kiếm
   const filter = {
@@ -75,21 +83,13 @@ exports.searchUsers = catchAsync(async (req, res, next) => {
       { email: { $regex: key, $options: 'i' } }
     ]
   };
-  const skip = (page - 1) * parseInt(limit, 10);
-
-  const [users, totalDocuments] = await Promise.all([
-    User.find(filter).skip(skip).limit(parseInt(limit, 10)),
-    User.countDocuments(filter)
-  ]);
-
-  const totalPages = Math.ceil(totalDocuments / limit);
+  const users = await User.find(filter);
 
   res.status(200).json({
     status: 'success',
     data: {
       users
-    },
-    pagination: { total: totalDocuments, totalPages }
+    }
   });
 });
 
