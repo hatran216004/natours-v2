@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Message = require('./messageModel');
 
 const conversationSchema = new mongoose.Schema(
   {
@@ -14,6 +15,10 @@ const conversationSchema = new mongoose.Schema(
         type: mongoose.Schema.ObjectId,
         ref: 'User'
       }
+    },
+    unreadCount: {
+      type: Number,
+      default: 0
     }
   },
   {
@@ -23,6 +28,12 @@ const conversationSchema = new mongoose.Schema(
 
 conversationSchema.pre('find', function (next) {
   this.populate('participants', 'name email photo');
+  next();
+});
+
+conversationSchema.pre('findOneAndDelete', async function (next) {
+  const doc = await this.model.findOne(this.getQuery());
+  if (doc) await Message.deleteMany({ conversationId: doc._id });
   next();
 });
 

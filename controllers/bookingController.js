@@ -1,16 +1,211 @@
-const crypto = require('crypto');
 const Tour = require('../models/tourModel');
 const Booking = require('../models/bookingModel');
 const AppError = require('../utils/appError');
-const axios = require('../config/axios');
-const { getAll, deleteOne } = require('./handlerFactory');
-const { NOT_FOUND, BAD_REQUEST } = require('../utils/constants');
+const { getAll, deleteOne, getOne } = require('./handlerFactory');
+const { NOT_FOUND } = require('../utils/constants');
 const catchAsync = require('../utils/catchAsync');
-const { createSignature } = require('../utils/helpers');
+const Transaction = require('../models/transactionModel');
 
-exports.getUserBookings = getAll(Booking);
-exports.getAllBookings = getAll(Booking);
-exports.deleteBooking = deleteOne(Booking);
+// const SEPAY_CONFIG = {
+//   QR_URL: process.env.SEPAY_QR_URL,
+//   BASE_URL: process.env.SEPAY_BASE_URL,
+//   TOKEN: process.env.SEPAY_TOKEN,
+//   BANK_CODE: process.env.SEPAY_BANK_NAME,
+//   ACCOUNT_NUMBER: process.env.SEPAY_BANK_ACCOUNT_NUMBER
+// };
+
+const extractOrderCode = (content) => {
+  const match = content.match(/DH\w+/);
+  return match ? match[0] : null;
+};
+
+const generateOrderCode = () => {
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `DH${Date.now()}${rand}`;
+};
+
+exports.createCheckout = catchAsync(async (req, res, next) => {
+  const { participants, specialRequirements, startDate, tourId } = req.body;
+  const tour = await Tour.findById(tourId);
+  if (!tour) return next(new AppError('Tour not found', NOT_FOUND));
+
+  const amount = tour.price * participants || 1;
+
+  const { SEPAY_QR_URL, SEPAY_BANK_NAME, SEPAY_BANK_ACCOUNT_NUMBER } =
+    process.env;
+
+  const orderCode = generateOrderCode();
+  const sepayQRUrl = `${SEPAY_QR_URL}?acc=${SEPAY_BANK_ACCOUNT_NUMBER}&bank=${SEPAY_BANK_NAME}&amount=${amount}&des=${orderCode}`;
+
+  await Booking.create({
+    tour: tourId,
+    user: req.user.id,
+    amount,
+    participants,
+    specialRequirements,
+    startDate,
+    orderCode
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      payment: {
+        qr_code_url: sepayQRUrl,
+        bank_account: SEPAY_BANK_ACCOUNT_NUMBER,
+        bank_name: SEPAY_BANK_NAME,
+        amount,
+        order_code: orderCode
+      }
+    }
+  });
+});
+
+const updateBookingPaid = async (booking) => {
+  const tour = await Tour.findById(booking.tour);
+
+  if (!tour) throw new AppError(`Tour not found with id: ${booking.tour}`, 200);
+
+  const dateSelected = tour.startDates.find(
+    (d) => d.date.getTime() === booking.startDate.getTime()
+  );
+  dateSelected.participants += booking.participants;
+  dateSelected.soldOut = dateSelected.participants >= tour.maxGroupSize;
+  booking.paymentStatus = 'Paid';
+  booking.paymentTime = Date.now();
+
+  await Promise.all([tour.save(), booking.save()]);
+};
+
+// transferType: 'in' | 'out'
+exports.sepayWebhook = catchAsync(async (req, res, next) => {
+  const {
+    gateway,
+    transactionDate,
+    accountNumber,
+    code,
+    content,
+    transferAmount,
+    accumulated,
+    description
+  } = req.body;
+
+  try {
+    // BƯỚC 1: Tạo transaction
+    const transaction = await Transaction.create({
+      accountNumber,
+      gateway,
+      transactionDate,
+      amountIn: transferAmount,
+      accumulated,
+      orderCode: code,
+      transactionContent: content || description
+    });
+
+    // BƯỚC 2: Tìm order_code trong nội dung chuyển khoản
+    const orderCode = extractOrderCode(code || content);
+    if (!orderCode) {
+      return next(
+        new AppError(
+          `Transaction saved but no order code found ${transaction.id}`,
+          200
+        )
+      );
+    }
+
+    // BƯỚC 3: Tìm booking theo order_code
+    const booking = await Booking.findOne({ orderCode: code });
+    if (!booking) {
+      return next(
+        new AppError(
+          `Transaction saved but booking not found ${transaction.id}`,
+          200
+        )
+      );
+    }
+    // BƯỚC 4: Kiểm tra booking đã được thanh toán chưa (tránh duplicate)
+    if (booking.paymentStatus === 'Paid') {
+      return next(
+        new AppError(
+          `Transaction saved but booking already paid ${booking.id}`,
+          200
+        )
+      );
+    }
+
+    // BƯỚC 5: Kiểm tra số tiền có khớp không
+    if (transferAmount !== booking.amount) {
+      await Transaction.findByIdAndUpdate(transaction.id, {
+        note: `Amount mismatch - Expected: ${booking.amount}, Received: ${transferAmount}`
+      });
+    }
+
+    // BƯỚC 6: Cập nhật booking thành đã thanh toán
+    await updateBookingPaid(booking);
+
+    res.status(200).json({
+      status: 'succes',
+      data: {
+        transaction
+      }
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+exports.updateBooking = catchAsync(async (req, res, next) => {
+  // 1. Find booking
+  const oldBooking = await Booking.findById(req.params.id);
+  if (!oldBooking) return next(new AppError('Booking not found', NOT_FOUND));
+
+  // 2.Update booking
+  const booking = await Booking.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  });
+
+  // 3. Update tour participants
+  const tour = await Tour.findById(booking.tour);
+  const dateSelected = tour.startDates.find(
+    (d) => d.date.getTime() === booking.startDate.getTime()
+  );
+  const diff = req.body.participants - oldBooking.participants;
+  dateSelected.participants += diff;
+
+  dateSelected.soldOut = dateSelected.participants >= tour.maxGroupSize;
+
+  // 4. Update booking price
+  booking.price = booking.participants * tour.price;
+  await booking.save();
+  await tour.save();
+
+  res.status(200).json({
+    status: 'succes',
+    data: {
+      booking
+    }
+  });
+});
+
+exports.refundPayment = catchAsync(async (req, res, next) => {
+  // const { refundAmount, refundReason } = req.body;
+  // const { id } = req.params;
+  // const booking = await Booking.findById(id);
+  // if (!booking)
+  //   return next(new AppError('No booking found for refund!', NOT_FOUND));
+  // if (booking.status !== 'confirmed') {
+  //   return next(
+  //     new AppError('Only confirmed bookings can be refund', BAD_REQUEST)
+  //   );
+  // }
+  // res.status(200).json({
+  //   status: 'success',
+  //   data: {
+  //     data: {}
+  //   }
+  // });
+});
 
 exports.getBookingStatus = catchAsync(async (req, res, next) => {
   const stats = await Booking.aggregate([
@@ -40,228 +235,7 @@ exports.getBookingStatus = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updateBooking = catchAsync(async (req, res, next) => {
-  const { participants } = req.body;
-  // 1. Find booking
-  const booking = await Booking.findById(req.params.id);
-  if (!booking) return next(new AppError('Booking not found', NOT_FOUND));
-
-  // // 2. Update tour participants
-  const tour = await Tour.findById(booking.tour);
-  const participantsUpdated = booking.participants - participants;
-  // 3. Update booking
-  booking.participants = participants;
-  const [newBooking] = await Promise.all([
-    booking.save(),
-    booking.updateTourParticipants(
-      participantsUpdated,
-      tour,
-      booking.startDate,
-      'update'
-    )
-  ]);
-
-  res.status(200).json({
-    status: 'succes',
-    data: {
-      booking: newBooking
-    }
-  });
-});
-
-exports.checkoutSession = catchAsync(async (req, res, next) => {
-  const tour = await Tour.findById(req.params.tourId);
-  if (!tour) return next(new AppError('Tour not found', NOT_FOUND));
-
-  const orderInfo = 'pay with MoMo';
-  const partnerCode = process.env.MOMO_PARTNER_CODE;
-  const redirectUrl = `${process.env.FRONTEND_URL}/api/v2/bookings/confirmation`;
-  let ipnUrl = `${req.protocol}://${req.get('host')}/api/v2/bookings/callback`;
-
-  if (process.env.NODE_ENV === 'development') {
-    ipnUrl =
-      'https://cadc-14-191-93-139.ngrok-free.app/api/v2/bookings/callback';
-  }
-
-  const requestType = 'payWithMethod';
-  const price = tour.price - (tour.priceDiscount ?? 0);
-  const bookingData = {
-    tour: tour.id,
-    user: req.user.id
-  };
-  const userInfo = {
-    name: req.user.name,
-    email: req.user.email
-  };
-  const amount = `${price * 100}`;
-  const orderId = `${partnerCode}_${Date.now()}_${req.user.id}`;
-  const requestId = orderId;
-  const extraData = Buffer.from(JSON.stringify(bookingData)).toString('base64');
-  const orderExpireTime = 15;
-  const autoCapture = true;
-  const lang = 'vi';
-
-  const rawSignature = `accessKey=${process.env.MOMO_ACCESS_KEY}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${orderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;
-  const signature = createSignature(rawSignature);
-
-  //json object send to MoMo endpoint
-  const requestBody = JSON.stringify({
-    partnerCode,
-    partnerName: 'Tour Booking',
-    storeId: 'TourBookingStore',
-    requestId,
-    amount,
-    orderId,
-    orderInfo,
-    redirectUrl,
-    ipnUrl,
-    lang,
-    requestType,
-    autoCapture,
-    extraData,
-    orderGroupId: '',
-    signature,
-    orderExpireTime,
-    userInfo
-  });
-
-  const result = await axios.post('/api/create', requestBody, {
-    headers: {
-      'Content-Length': Buffer.byteLength(requestBody)
-    }
-  });
-
-  const booking = await Booking.create({
-    ...bookingData,
-    price: amount,
-    paymentMethod: 'momo',
-    paymentId: orderId,
-    ...req.body
-  });
-  await booking.updateTourParticipants(
-    req.body.participants,
-    tour,
-    booking.startDate,
-    'create'
-  );
-
-  res.status(200).json({
-    status: 'success',
-    data: { payUrl: result.data.payUrl, orderId, amount, orderInfo }
-  });
-});
-
-exports.momoCallBack = catchAsync(async (req, res, next) => {
-  const { orderId, transId, resultCode, message } = req.body;
-
-  let booking;
-  if (resultCode === 0) {
-    booking = await Booking.findOneAndUpdate(
-      {
-        paymentId: orderId,
-        status: 'pending'
-      },
-      {
-        transactionId: transId,
-        status: 'confirmed',
-        paymentDate: new Date()
-      },
-      {
-        new: true
-      }
-    );
-  } else {
-    booking = await Booking.findOneAndUpdate(
-      { paymentId: orderId },
-      { status: 'failed' },
-      {
-        new: true
-      }
-    );
-  }
-
-  res.status(200).json({
-    status: 'success',
-    message,
-    data: {
-      booking
-    }
-  });
-});
-
-exports.refundPayment = catchAsync(async (req, res, next) => {
-  const { refundAmount, refundReason } = req.body;
-  const { id } = req.params;
-  const booking = await Booking.findById(id);
-
-  if (!booking)
-    return next(new AppError('No booking found for refund!', NOT_FOUND));
-
-  if (booking.status !== 'confirmed') {
-    return next(
-      new AppError('Only confirmed bookings can be refund', BAD_REQUEST)
-    );
-  }
-
-  const refundOrderId = `REFUND_${booking.id}_${Date.now()}_${crypto.randomBytes(10).toString('hex')}`;
-
-  const rawSignature = `accessKey=${process.env.MOMO_ACCESS_KEY}&amount=${refundAmount}&description=${refundReason}&orderId=${refundOrderId}&partnerCode=MOMO&requestId=${refundOrderId}&transId=${booking.transactionId}`;
-  const signature = createSignature(rawSignature);
-
-  const requestBody = {
-    partnerCode: 'MOMO',
-    requestId: refundOrderId,
-    orderId: refundOrderId,
-    amount: refundAmount,
-    transId: booking.transactionId,
-    signature,
-    description: refundReason,
-    lang: 'vi'
-  };
-
-  let result;
-  try {
-    result = await axios.post('/api/refund', requestBody);
-    booking.status = 'refunded';
-    booking.price = Math.max(0, booking.price - refundAmount);
-    await booking.save();
-  } catch (error) {
-    return next(
-      new AppError(
-        'The refund amount must be less than or equal to the order amount.',
-        BAD_REQUEST
-      )
-    );
-  }
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      data: result.data
-    }
-  });
-});
-
-exports.transactionStatus = catchAsync(async (req, res, next) => {
-  const { orderId } = req.body;
-  const rawSignature = `accessKey=${process.env.MOMO_ACCESS_KEY}&orderId=${orderId}&partnerCode=MOMO&requestId=${orderId}`;
-  const signature = createSignature(rawSignature);
-
-  const requestBody = {
-    partnerCode: 'MOMO',
-    requestId: orderId,
-    orderId,
-    signature,
-    lang: 'vi'
-  };
-
-  const result = await axios('/api/query', requestBody);
-  res.status(200).json({
-    status: 'success',
-    data: {
-      data: result.data
-    }
-  });
-});
-
-// 0701234567
+exports.getUserBookings = getAll(Booking);
+exports.getAllBookings = getAll(Booking);
+exports.deleteBooking = deleteOne(Booking);
+exports.getBooking = getOne(Booking);

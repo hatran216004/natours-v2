@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema(
   {
-    conservationId: {
+    conversationId: {
       type: mongoose.Schema.ObjectId,
       ref: 'Conversation',
       required: true
@@ -15,6 +15,10 @@ const messageSchema = new mongoose.Schema(
     text: {
       type: String,
       required: true
+    },
+    isSeen: {
+      type: Boolean,
+      default: false
     }
   },
   {

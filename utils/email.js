@@ -35,15 +35,20 @@ class Email {
     });
   }
 
-  async send(template, subject) {
+  async send(template, subject, booking) {
+    let ejsData = {
+      firstName: this.firstName,
+      url: this.url,
+      subject,
+      myCss
+    };
+
+    if (booking) {
+      ejsData = { ...ejsData, booking };
+    }
     const html = await ejs.renderFile(
       `${__dirname}/../views/email/${template}.ejs`,
-      {
-        firstName: this.firstName,
-        url: this.url,
-        subject,
-        myCss
-      }
+      ejsData
     );
 
     const emailOptions = {
@@ -66,6 +71,14 @@ class Email {
     await this.send(
       'password-reset',
       'Your password reset token (valid for only 10 minutes)!'
+    );
+  }
+
+  async sendBookingSuccessfully(booking) {
+    await this.send(
+      'booking-success',
+      'Tour booking confirmed successfully!',
+      booking
     );
   }
 }

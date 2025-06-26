@@ -34,7 +34,7 @@ const tourSchema = new Schema(
     },
     difficulty: {
       type: String,
-      requiredd: [true, 'A tour must have a difficulty'],
+      required: [true, 'A tour must have a difficulty'],
       enum: {
         values: ['easy', 'medium', 'difficult'],
         message: 'Difficult is either: easy, medium, difficulty'

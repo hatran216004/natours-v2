@@ -1,4 +1,5 @@
 // file app thường khai báo và sử dụng các middleware
+const http = require('http');
 const express = require('express');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
@@ -9,21 +10,27 @@ const helmet = require('helmet');
 const xss = require('xss-clean');
 const mongoSanitize = require('express-mongo-sanitize');
 const passport = require('passport');
+
 require('./config/passport-jwt');
 
 const AppError = require('./utils/appError');
-const tourRouter = require('./routes/tourRouter');
-const userRouter = require('./routes/userRouter');
-const reviewRouter = require('./routes/reviewRouter');
-const roleRouter = require('./routes/roleRouter');
-const bookingRouter = require('./routes/bookingRouter');
-const permissionRouter = require('./routes/permissionRouter');
-const messageRouter = require('./routes/messageRouter');
-const conversationRouter = require('./routes/conversationRouter');
+const tourRouter = require('./routes/tourRoutes');
+const userRouter = require('./routes/userRoutes');
+const reviewRouter = require('./routes/reviewRoutes');
+const roleRouter = require('./routes/roleRoutes');
+const bookingRouter = require('./routes/bookingRoutes');
+const permissionRouter = require('./routes/permissionRoutes');
+const messageRouter = require('./routes/messageRoutes');
+const conversationRouter = require('./routes/conversationRoutes');
+const notificationRouter = require('./routes/notificationRoutes');
+
 const globalErrorHandler = require('./controllers/errorController');
 // const limiter = require('./middleware/rateLimitMiddleware');
 
+const { initSocket } = require('./socket/socket');
+
 const app = express();
+const server = http.createServer(app);
 
 app.set('view engine', 'ejs');
 
@@ -64,7 +71,7 @@ app.use(
 
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true
   })
 );
@@ -72,6 +79,8 @@ app.use(
 app.options('*', cors());
 
 app.use(passport.initialize());
+
+const io = initSocket(server);
 
 /*
 Test    
@@ -96,6 +105,7 @@ app.use('/api/v2/roles', roleRouter);
 app.use('/api/v2/permissions', permissionRouter);
 app.use('/api/v2/messages', messageRouter);
 app.use('/api/v2/conversations', conversationRouter);
+app.use('/api/v2/notifications', notificationRouter);
 
 // Hanlde error unhanlded routes
 app.all('*', (req, res, next) => {
@@ -107,4 +117,4 @@ app.all('*', (req, res, next) => {
 // Middleware error hanlder
 app.use(globalErrorHandler);
 
-module.exports = app;
+module.exports = { app, server, io };

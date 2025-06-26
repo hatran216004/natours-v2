@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const cloudinary = require('../config/cloudinary');
+const logger = require('./logger');
 
 exports.hashToken = (token) =>
   crypto.createHash('sha256').update(token).digest('hex');
@@ -14,14 +15,8 @@ exports.filterObj = (obj, ...allowedFields) => {
   return newObj;
 };
 
-exports.createSignature = (rawSignature) =>
-  crypto
-    .createHmac('sha256', process.env.MOMO_SECRET_KEY)
-    .update(rawSignature)
-    .digest('hex');
-
 exports.uploadToCloudinary = async (byteArrayBuffer, filename, folder) => {
-  const publicId = `${filename.replace('.jpg', '')}-${Date.now()}`;
+  const publicId = `${filename}-${Date.now()}`;
   return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
@@ -35,5 +30,19 @@ exports.uploadToCloudinary = async (byteArrayBuffer, filename, folder) => {
         }
       )
       .end(byteArrayBuffer);
+  });
+};
+
+exports.handleSocketError = (socket, eventName, error) => {
+  logger.error(`Socket error in ${eventName}:`, {
+    error: error.message,
+    stack: error.stack,
+    userId: socket.userId,
+    socketId: socket.id
+  });
+
+  socket.emit('error', {
+    event: eventName,
+    message: error.message
   });
 };

@@ -5,14 +5,14 @@ const Booking = require('../models/bookingModel');
 
 const router = express.Router({ mergeParams: true });
 
-router.post('/callback', bookingController.momoCallBack);
+router.post('/sepay-webhook', bookingController.sepayWebhook);
 
 router.use(authMiddleware.authenticateJWT);
 
 router.get('/me', bookingController.getUserBookings);
 
-router.post('/payment/:tourId', bookingController.checkoutSession);
-router.post('/transaction-status', bookingController.transactionStatus);
+router.post('/checkout', bookingController.createCheckout);
+
 router.post(
   '/refund/:id',
   authMiddleware.checkIsUser(Booking),
@@ -25,9 +25,10 @@ router.get(
   authMiddleware.checkPermission('manage_bookings'),
   bookingController.getAllBookings
 );
-router.get('/status', bookingController.getBookingStatus);
+
 router
   .route('/:id')
+  .get(bookingController.getBooking)
   .patch(bookingController.updateBooking)
   .delete(
     authMiddleware.checkPermission('manage_bookings'),

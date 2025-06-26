@@ -15,16 +15,17 @@ exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
 
   const byteArrayBuffer = await sharp(req.file.buffer)
     .resize(500, 500)
-    .toFormat('jpeg')
+    .toFormat('jpg')
     .jpeg({ quality: 90 })
     .toBuffer();
 
   const result = await uploadToCloudinary(
     byteArrayBuffer,
-    req.file.filename,
+    req.file.fieldname,
     'users'
   );
-  req.file.filename = result.public_id.replace('users/', '');
+
+  req.file.fieldname = result.display_name;
   next();
 });
 
@@ -108,7 +109,7 @@ exports.getMe = catchAsync(async (req, res, next) =>
 
 exports.updateMe = catchAsync(async (req, res, next) => {
   const filteredBody = filterObj(req.body, 'name', 'email');
-  if (req.file) filteredBody.photo = req.file.filename;
+  if (req.file) filteredBody.photo = req.file.fieldname;
 
   const user = await User.findByIdAndUpdate(req.user.id, filteredBody, {
     new: true,

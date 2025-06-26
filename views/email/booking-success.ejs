@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= subject %></title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f4f4f4;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .header {
+        background: #55c57a;
+        color: white;
+        padding: 30px 20px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 16px;
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 40px 30px;
+      }
+
+      .greeting {
+        font-size: 18px;
+        margin-bottom: 25px;
+        color: #2c3e50;
+      }
+
+      .success-message {
+        background-color: #55c57a;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        text-align: center;
+      }
+
+      .success-icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+      }
+
+      .booking-details {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+      }
+
+      .booking-title {
+        font-size: 20px;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      .detail-row:last-child {
+        border-bottom: none;
+      }
+
+      .detail-label {
+        font-weight: 600;
+        color: #495057;
+        flex: 1;
+      }
+
+      .detail-value {
+        font-weight: 500;
+        color: #2c3e50;
+        flex: 1;
+        text-align: right;
+      }
+
+      .payment-info {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        padding: 20px;
+        margin-bottom: 30px;
+      }
+
+      .payment-title {
+        font-size: 18px;
+        color: #1976d2;
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+
+      .amount {
+        font-size: 24px;
+        font-weight: bold;
+        color: #4caf50;
+        text-align: center;
+        margin: 15px 0;
+      }
+
+      .next-steps {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+      }
+
+      .next-steps h3 {
+        color: #856404;
+        margin-bottom: 15px;
+      }
+
+      .next-steps ul {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      .next-steps li {
+        padding: 8px 0;
+        border-bottom: 1px solid #ffeaa7;
+      }
+
+      .next-steps li:last-child {
+        border-bottom: none;
+      }
+
+      .next-steps li:before {
+        content: '✓';
+        color: #28a745;
+        font-weight: bold;
+        margin-right: 10px;
+      }
+
+      .contact-info {
+        background-color: #f1f3f4;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+      }
+
+      .contact-title {
+        font-size: 18px;
+        color: #2c3e50;
+        margin-bottom: 15px;
+      }
+
+      .contact-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .contact-item {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .contact-item strong {
+        color: #495057;
+      }
+
+      .footer {
+        background-color: #2c3e50;
+        color: white;
+        padding: 30px 20px;
+        text-align: center;
+      }
+
+      .footer p {
+        margin-bottom: 10px;
+      }
+
+      .footer a {
+        color: #74b9ff;
+        text-decoration: none;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+
+      .social-links {
+        margin-top: 20px;
+      }
+
+      .social-links a {
+        display: inline-block;
+        margin: 0 10px;
+        color: #74b9ff;
+        font-size: 18px;
+        text-decoration: none;
+      }
+
+      @media (max-width: 600px) {
+        .container {
+          margin: 0;
+          border-radius: 0;
+        }
+
+        .content {
+          padding: 20px 15px;
+        }
+
+        .detail-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .detail-value {
+          text-align: left;
+          margin-top: 5px;
+        }
+
+        .contact-details {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <h1>🎉 Tour booking confirmed successfully!</h1>
+        <p>Thank you for trusting and choosing our services.</p>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        <!-- Greeting -->
+        <div class="greeting">
+          Hi <strong><%= booking.user.name %></strong>,
+          <span
+            >Your tour booking has been confirmed. We will contact you
+            soon.</span
+          >
+        </div>
+
+        <div class="booking-details">
+          <div class="booking-title">📋 Tour Information</div>
+          <div class="detail-row">
+            <span class="detail-label">Tour order id:</span>
+            <span class="detail-value"
+              ><strong><%= booking.orderCode %></strong></span
+            >
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Start date:</span>
+            <span class="detail-value"
+              ><%= new Date(booking.startDate).toLocaleDateString('vi-VN')
+              %></span
+            >
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Participants:</span>
+            <span class="detail-value"
+              ><%= booking.participants %> participants</span
+            >
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Time:</span>
+            <span class="detail-value"><%= booking.tour.duration %> days</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Difficulty:</span>
+            <span class="detail-value"><%= booking.tour.difficulty %></span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Booking date:</span>
+            <span class="detail-value"
+              ><%= new Date(booking.createdAt).toLocaleDateString('vi-VN')
+              %></span
+            >
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Payment time:</span>
+            <span class="detail-value"
+              ><%= new Date(booking.paymentTime).toLocaleDateString('vi-VN')
+              %></span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -17,12 +17,12 @@ exports.resizeTourImages = catchAsync(async (req, res, next) => {
     const filename = req.files.imageCover[0].fieldname;
     const byteArrayBuffer = await sharp(req.files.imageCover[0].buffer)
       .resize(2000, 1333)
-      .toFormat('jpeg')
+      .toFormat('jpg')
       .jpeg({ quality: 90 })
       .toBuffer();
 
     const result = await uploadToCloudinary(byteArrayBuffer, filename, 'tours');
-    req.body.imageCover = result.public_id.replace('tours/', '');
+    req.body.imageCover = result.display_name;
   }
 
   if (req.files?.images) {

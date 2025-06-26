@@ -1,8 +1,8 @@
 const express = require('express');
 const tourController = require('../controllers/tourController');
 const authMiddleware = require('../middleware/authMiddleware');
-const reviewRouter = require('./reviewRouter');
-const bookingRouter = require('./bookingRouter');
+const reviewRouter = require('./reviewRoutes');
+const bookingRouter = require('./bookingRoutes');
 
 const router = express.Router(); // tạo ra 1 middleware router(tourRouter)
 // Moute router con (reviewRouter) vào router cha tourRouter

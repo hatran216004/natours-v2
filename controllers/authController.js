@@ -132,7 +132,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   // 3. Send token to email
   try {
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/v2/users/forgot-password/${resetToken}`;
+    // const resetUrl = `${req.protocol}://${req.get('host')}/api/v2/users/forgot-password/${resetToken}`;
+    const resetUrl = `${process.env.CLIENT_URL}/forgot-password/${resetToken}`;
     await new Email(user, resetUrl).sendResetPassword();
 
     res.status(200).json({
@@ -171,6 +172,8 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   user.passwordConfirm = passwordConfirm;
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
+  user.failedAttempts = 0;
+  user.lockUntil = null;
   // 3. Update passwordChangeAt(document middleware)
   // luôn sử dụng save() những thứ liên quan đến password, user để tất cả các trình validate có thể chạy
   await user.save();

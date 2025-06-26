@@ -62,6 +62,14 @@ const userSchema = new mongoose.Schema(
       type: Date, // Thời gian bị khóa tài khoản
       default: null,
       select: false
+    },
+    status: {
+      type: String,
+      enum: {
+        values: ['online', 'offline'],
+        message: 'Status is either: online, offline'
+      },
+      default: 'offline'
     }
   },
   {
