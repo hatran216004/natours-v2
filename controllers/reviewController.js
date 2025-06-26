@@ -1,5 +1,5 @@
 const Review = require('../models/reviewModel');
-const ApiFeatures = require('../utils/apiFeatures');
+const reviewService = require('../services/reviewService');
 const catchAsync = require('../utils/catchAsync');
 const {
   deleteOne,
@@ -16,22 +16,8 @@ exports.setTourUserIds = (req, res, next) => {
 };
 
 exports.getAllReviewsOnTour = catchAsync(async (req, res, next) => {
-  const features = new ApiFeatures(
-    Review.find({ tour: req.params.tourId }),
-    req.query
-  )
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-
-  // Excute
-  const [docs, totalDocuments] = await Promise.all([
-    features.query,
-    Review.countDocuments()
-  ]);
-
-  const modelName = Review.modelName.toLowerCase();
+  const { docs, totalDocuments, modelName } =
+    await reviewService.getAllReviewsOnTour(req.params.tourId, req.query);
 
   res.status(200).json({
     status: 'success',

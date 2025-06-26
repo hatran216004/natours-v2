@@ -1,23 +1,8 @@
-const User = require('../models/userModel');
 const AppError = require('../utils/appError');
-const Email = require('../utils/email');
 const catchAsync = require('../utils/catchAsync');
-const { hashToken } = require('../utils/helpers');
-const {
-  generateTokens,
-  setTokenBlacklist,
-  verifyRefreshToken
-} = require('../utils/jwt');
-const {
-  UNAUTHORIZED,
-  BAD_REQUEST,
-  NOT_FOUND,
-  SERVER_ERROR,
-  FORBIDDEN,
-  MAX_ATTEMPTS,
-  LOCK_TIME
-} = require('../utils/constants');
-const client = require('../redisClient');
+const { generateTokens, setTokenBlacklist } = require('../utils/jwt');
+const { UNAUTHORIZED, BAD_REQUEST } = require('../utils/constants');
+const authService = require('../services/authService');
 
 const setTokenCookie = (res, refreshToken) => {
   const cookieOptions = {
@@ -61,51 +46,18 @@ const createSendToken = async (user, statusCode, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-  const { email, password, name, passwordConfirm } = req.body;
-  let newUser = await User.create({ email, name, password, passwordConfirm });
-  newUser = await newUser.populate({ path: 'role', select: 'name' });
-
   const url = `${req.protocol}://${req.get('host')}/`;
-  await new Email(newUser, url).sendWelcome();
+  const newUser = await authService.signup(req.body, url);
 
   createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-
   if (!email || !password)
     return next(new AppError('You are missing email or password', BAD_REQUEST));
 
-  const user = await User.findOne({ email }).select(
-    '+password -__v +failedAttempts +lockUntil'
-  );
-
-  if (!user)
-    return next(new AppError('Incorrect email or password', UNAUTHORIZED));
-
-  if (user.isLocked()) {
-    return next(
-      new AppError(
-        'Account temporarily locked, please try again later',
-        FORBIDDEN
-      )
-    );
-  }
-
-  if (!(await user.correctPassword(password, user.password))) {
-    user.failedAttempts += 1;
-    if (user.failedAttempts >= MAX_ATTEMPTS) {
-      user.lockUntil = Date.now() + LOCK_TIME;
-    }
-    await user.save({ validateBeforeSave: false });
-    return next(new AppError('Incorrect email or password', UNAUTHORIZED));
-  }
-
-  user.failedAttempts = 0;
-  user.lockUntil = null;
-  await user.save({ validateBeforeSave: false });
-
+  const user = await authService.login(email, password);
   createSendToken(user, 200, res);
 });
 
@@ -121,85 +73,39 @@ exports.logout = catchAsync(async (req, res, next) => {
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   const { email } = req.body;
-  // 1. Get user dựa trên email
-  const user = await User.findOne({ email });
-  if (!user)
-    return next(new AppError('There is no user with email address', NOT_FOUND));
+  await authService.forgotPassword(email);
 
-  // 2. Generate random reset token
-  const resetToken = user.createPasswordResetToken();
-  await user.save({ validateBeforeSave: false });
-
-  // 3. Send token to email
-  try {
-    // const resetUrl = `${req.protocol}://${req.get('host')}/api/v2/users/forgot-password/${resetToken}`;
-    const resetUrl = `${process.env.CLIENT_URL}/forgot-password/${resetToken}`;
-    await new Email(user, resetUrl).sendResetPassword();
-
-    res.status(200).json({
-      status: 'success',
-      message: 'Token send to email'
-    });
-  } catch (error) {
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-
-    return next(
-      new AppError(
-        'There was an error sending the email. Try again later!',
-        SERVER_ERROR
-      )
-    );
-  }
+  res.status(200).json({
+    status: 'success',
+    message: 'Token send to email'
+  });
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
   const { token } = req.params;
   const { password, passwordConfirm } = req.body;
-  // 1. Get user bằng token
-  const hashedToken = hashToken(token);
-  const user = await User.findOne({
-    passwordResetToken: hashedToken,
-    passwordResetExpires: { $gte: Date.now() }
-  });
 
-  if (!user)
-    return next(new AppError('Token invalid or has expired', BAD_REQUEST));
+  const user = await authService.resetPassword(
+    token,
+    password,
+    passwordConfirm
+  );
 
-  // 2. Nếu có user và token còn hạn, update new password
-  user.password = password;
-  user.passwordConfirm = passwordConfirm;
-  user.passwordResetToken = undefined;
-  user.passwordResetExpires = undefined;
-  user.failedAttempts = 0;
-  user.lockUntil = null;
-  // 3. Update passwordChangeAt(document middleware)
-  // luôn sử dụng save() những thứ liên quan đến password, user để tất cả các trình validate có thể chạy
-  await user.save();
-
-  // 5. Tạo mới acc, refresh token và login
+  // Tạo mới acc, refresh token và login
   createSendToken(user, 200, res);
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
   const { currentPassword, newPassword, passwordConfirm } = req.body;
 
-  // 1. Get user từ db
-  const user = await User.findById(req.user.id).select('+password');
-
-  // 2. Kiểm tra mật khẩu hiện tại
-  if (!(await user.correctPassword(currentPassword, user.password))) {
-    return next(new AppError('Your current password is wrong', UNAUTHORIZED));
-  }
-
-  // 3. Add access, refresh token hiện tại vào blacklist
+  const user = await authService.updatePassword(
+    req.user.id,
+    currentPassword,
+    newPassword,
+    passwordConfirm
+  );
+  // 4.Add access, refresh token hiện tại vào blacklist
   await invalidateTokens(req, next);
-
-  // 4. Cập nhật mật khẩu & passwordChangedAt(document middleware)
-  user.password = newPassword;
-  user.passwordConfirm = passwordConfirm;
-  await user.save();
 
   // 5. Tạo mới acccess, refresh token và login
   createSendToken(user, 200, res);
@@ -216,16 +122,8 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
     );
   }
 
-  const decoded = await verifyRefreshToken(oldRefreshToken);
-  const isBlacklisted = await client.get(
-    `bl_refresh_${decoded.id}_${decoded.jti}`
-  );
-  if (isBlacklisted) {
-    return next(new AppError('Token revoked', UNAUTHORIZED));
-  }
-
-  await setTokenBlacklist(oldRefreshToken, 'refresh');
-  const { accessToken, refreshToken } = generateTokens(decoded.id);
+  const { accessToken, refreshToken } =
+    await authService.refreshToken(oldRefreshToken);
   setTokenCookie(res, refreshToken);
 
   res.status(200).json({

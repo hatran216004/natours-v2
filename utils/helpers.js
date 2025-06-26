@@ -46,3 +46,13 @@ exports.handleSocketError = (socket, eventName, error) => {
     message: error.message
   });
 };
+
+exports.extractOrderCode = (content) => {
+  const match = content.match(/DH\w+/);
+  return match ? match[0] : null;
+};
+
+exports.generateOrderCode = () => {
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `DH${Date.now()}${rand}`;
+};
