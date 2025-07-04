@@ -124,6 +124,7 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
 
   const { accessToken, refreshToken } =
     await authService.refreshToken(oldRefreshToken);
+
   setTokenCookie(res, refreshToken);
 
   res.status(200).json({

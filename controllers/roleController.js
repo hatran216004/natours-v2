@@ -1,11 +1,20 @@
 const Role = require('../models/roleModel');
-const { createOne, deleteOne, getAll } = require('./handlerFactory');
+const { createOne, getAll, updateOne } = require('./handlerFactory');
 const catchAsync = require('../utils/catchAsync');
 const roleService = require('../services/roleService');
 
 exports.getAllRoles = getAll(Role);
 exports.createRole = createOne(Role);
-exports.deleteRole = deleteOne(Role);
+exports.updateRole = updateOne(Role);
+
+exports.deleteRole = catchAsync(async (req, res, next) => {
+  await roleService.deleteRoleSafely(req.params.id);
+
+  res.status(204).json({
+    status: 'success',
+    data: null
+  });
+});
 
 exports.assignPermissionToRole = catchAsync(async (req, res, next) => {
   const { roleId, permissionId } = req.params;

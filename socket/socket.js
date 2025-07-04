@@ -3,10 +3,8 @@ const { socketAuth } = require('../middleware/socketAuth');
 const logger = require('../utils/logger');
 const { setupSocketEvents } = require('../services/socketService');
 
-let io;
-
 const initSocket = (server) => {
-  io = new Server(server, {
+  const io = new Server(server, {
     cors: {
       origin: process.env.CLIENT_URL || 'http://localhost:5173',
       credentials: true,
@@ -24,4 +22,4 @@ const initSocket = (server) => {
   return io;
 };
 
-module.exports = { initSocket, io };
+module.exports = { initSocket };

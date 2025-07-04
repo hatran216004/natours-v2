@@ -63,3 +63,27 @@ exports.getBookingStatus = catchAsync(async (req, res, next) => {
     }
   });
 });
+
+exports.getMonthlyRevenue = catchAsync(async (req, res, next) => {
+  const data = await bookingService.getMonthlyRevenue();
+  res.status(200).json({
+    status: 'success',
+    data: { data }
+  });
+});
+
+exports.getStatusRatio = catchAsync(async (req, res, next) => {
+  const data = await bookingService.getStatusRatio();
+  res.status(200).json({
+    status: 'success',
+    data: { data }
+  });
+});
+
+exports.getTopBooked = catchAsync(async (req, res, next) => {
+  const data = await bookingService.getTopBooked(+req.query.limit || 3);
+  res.status(200).json({
+    status: 'success',
+    data: { data }
+  });
+});

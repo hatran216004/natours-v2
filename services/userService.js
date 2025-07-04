@@ -23,8 +23,8 @@ class UserService {
     return users;
   }
 
-  async updateCurrentUser(userId, dataUpdated) {
-    const user = await User.findByIdAndUpdate(userId, dataUpdated, {
+  async updateCurrentUser(userId, body) {
+    const user = await User.findByIdAndUpdate(userId, body, {
       new: true,
       runValidators: true
     });

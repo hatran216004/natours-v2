@@ -22,7 +22,7 @@ const bookingSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ['Unpaid', 'Paid', 'Cancelled', 'Refunded'],
+      enum: ['Unpaid', 'Paid', 'Cancelled', 'Refunded', 'Failed'],
       default: 'Unpaid'
     },
     paymentMethod: {

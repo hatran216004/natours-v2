@@ -14,7 +14,7 @@ const getOnlineUsersCount = () => userSocketMap.size;
 
 const broadcastOnlineUsers = (io) => {
   const onlineUsers = Array.from(userSocketMap.keys());
-  io.emit('onlineUsers', onlineUsers);
+  io.emit('online_users', onlineUsers);
 };
 
 const handleUserConnection = async (socket, io) => {
@@ -31,7 +31,7 @@ const handleUserConnection = async (socket, io) => {
 };
 
 const setupMessageEvents = (socket, io) => {
-  socket.on('markMessagesAsSeen', async (data) => {
+  socket.on('mark_messages_as_seen', async (data) => {
     try {
       const result = await messageService.markMessagesAsSeen(data);
 
@@ -39,7 +39,7 @@ const setupMessageEvents = (socket, io) => {
         // Thông báo cho người gửi để hiển thị đã xem
         const senderSocketId = getUserSocketId(result.senderId);
         if (senderSocketId) {
-          io.to(senderSocketId).emit('messagesSeenConfirm', {
+          io.to(senderSocketId).emit('messages_seen_confirm', {
             messageIds: result.messageIds,
             conversationId: result.conversationId
           });
@@ -48,39 +48,35 @@ const setupMessageEvents = (socket, io) => {
         // Cập nhật unread count cho người nhận
         const recipientSocketId = getUserSocketId(result.recipientId);
         if (recipientSocketId) {
-          io.to(recipientSocketId).emit('unreadCountUpdated', {
+          io.to(recipientSocketId).emit('unread_count_updated', {
             conversationId: result.conversationId,
             unreadCount: 0
           });
         }
       }
     } catch (error) {
-      handleSocketError(socket, 'markMessagesAsSeen', error);
+      handleSocketError(socket, 'mark_messages_as_seen', error);
     }
   });
 
-  socket.on('sendMessage', async (data) => {
+  socket.on('send_message', async (data) => {
     try {
-      const senderId = socket.userId;
+      const senderId = socket.user.id;
       const result = await messageService.createMessage({ ...data, senderId });
 
       if (result.success) {
-        io.to(`conversation_${result.conversationId}`).emit(
-          'newMessage',
-          result.newMessage
-        );
-
+        io.to(result.recipientId).emit('new_message', result.newMessage);
         // Confirm cho người gửi
-        socket.emit('messageSent', result.newMessage);
+        socket.emit('message_sent', result.newMessage);
       }
     } catch (error) {
-      handleSocketError(socket, 'sendMessage', error);
+      handleSocketError(socket, 'send_message', error);
     }
   });
 };
 
 const setupConversationEvents = (socket, io) => {
-  socket.on('updateUnreadCount', async (data) => {
+  socket.on('update_unread_count', async (data) => {
     const { conversationId, recipientId } = data;
     try {
       const result =
@@ -89,45 +85,45 @@ const setupConversationEvents = (socket, io) => {
       if (result.success) {
         const recipientSocketId = getUserSocketId(recipientId);
         if (recipientSocketId) {
-          io.to(recipientSocketId).emit('unreadCountUpdated', {
+          io.to(recipientSocketId).emit('unread_count_updated', {
             conversationId,
             unreadCount: result.unreadCount
           });
         }
       }
     } catch (error) {
-      handleSocketError(socket, 'updateUnreadCount', error);
+      handleSocketError(socket, 'update_unread_count', error);
     }
   });
 
-  socket.on('joinConversation', (conversationId) => {
+  socket.on('join_conversation', (conversationId) => {
     socket.join(`conversation_${conversationId}`);
-    logger.info(`User ${socket.userId} joined conversation ${conversationId}`);
+    logger.info(`User ${socket.user.id} joined conversation ${conversationId}`);
   });
 
-  socket.on('leaveConversation', (conversationId) => {
+  socket.on('left_conversation', (conversationId) => {
     socket.leave(`conversation_${conversationId}`);
-    logger.info(`User ${socket.userId} left conversation ${conversationId}`);
+    logger.info(`User ${socket.user.id} left conversation ${conversationId}`);
   });
 };
 
 const setupTypingEvents = (socket, io) => {
-  socket.on('startTyping', (data) => {
+  socket.on('user_start_typing', (data) => {
     const recipientSocketId = getUserSocketId(data.recipientId);
     if (recipientSocketId)
-      io.to(recipientSocketId).emit('userTyping', {
+      io.to(recipientSocketId).emit('user_typing', {
         isTyping: true,
-        userId: socket.userId,
+        userId: socket.user.id,
         conversationId: data.conversationId
       });
   });
 
-  socket.on('stopTyping', (data) => {
+  socket.on('user_stop_typing', (data) => {
     const recipientSocketId = getUserSocketId(data.recipientId);
     if (recipientSocketId) {
-      io.to(recipientSocketId).emit('userTyping', {
+      io.to(recipientSocketId).emit('user_typing', {
         isTyping: false,
-        userId: socket.userId,
+        userId: socket.user.id,
         conversationId: data.conversationId
       });
     }
@@ -136,7 +132,7 @@ const setupTypingEvents = (socket, io) => {
 
 const handleUserDisconnection = (socket, io) => {
   socket.on('disconnect', async () => {
-    const userId = socket.userId;
+    const userId = socket.user.id;
     try {
       if (userId) {
         userSocketMap.delete(userId);
@@ -147,7 +143,7 @@ const handleUserDisconnection = (socket, io) => {
         logger.info(`User ${userId} disconnected`);
       }
     } catch (error) {
-      handleSocketError(socket, 'updateUserStatus', error);
+      handleSocketError(socket, 'update_user_status', error);
     }
   });
 };

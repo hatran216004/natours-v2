@@ -31,6 +31,7 @@ const { initSocket } = require('./socket/socket');
 
 const app = express();
 const server = http.createServer(app);
+const io = initSocket(server);
 
 app.set('view engine', 'ejs');
 
@@ -79,8 +80,6 @@ app.use(
 app.options('*', cors());
 
 app.use(passport.initialize());
-
-const io = initSocket(server);
 
 /*
 Test    

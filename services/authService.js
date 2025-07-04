@@ -134,6 +134,7 @@ class AuthService {
     const isBlacklisted = await client.get(
       `bl_refresh_${decoded.id}_${decoded.jti}`
     );
+
     if (isBlacklisted) {
       throw new AppError('Token revoked', UNAUTHORIZED);
     }

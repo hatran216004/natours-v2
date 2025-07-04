@@ -16,6 +16,9 @@ router
   .route('/')
   .get(roleController.getAllRoles)
   .post(roleController.createRole);
-router.delete('/:id', roleController.deleteRole);
+router
+  .route('/:id')
+  .delete(roleController.deleteRole)
+  .patch(roleController.updateRole);
 
 module.exports = router;

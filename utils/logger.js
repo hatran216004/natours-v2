@@ -3,7 +3,7 @@ const winstion = require('winston');
 const logger = winstion.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: winstion.format.combine(
-    winstion.format.timestamp(),
+    // winstion.format.timestamp(),
     winstion.format.errors({ stack: true }),
     winstion.format.json()
   ),

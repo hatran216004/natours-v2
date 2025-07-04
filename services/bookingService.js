@@ -12,6 +12,24 @@ class BookingService {
     const tour = await Tour.findById(tourId);
     if (!tour) throw new AppError('Tour not found', NOT_FOUND);
 
+    const date = new Date(startDate);
+    const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+
+    const existStartDate = await Tour.findOne({
+      startDates: {
+        $elemMatch: {
+          date: {
+            $gte: startOfDay,
+            $lte: endOfDay
+          }
+        }
+      }
+    });
+
+    if (!existStartDate)
+      throw new AppError('Start date not found in tour', 400);
+
     const amount = tour.price * (participants || 1);
 
     const { SEPAY_QR_URL, SEPAY_BANK_NAME, SEPAY_BANK_ACCOUNT_NUMBER } =
@@ -42,6 +60,7 @@ class BookingService {
     const dateSelected = tour.startDates.find(
       (d) => d.date.getTime() === booking.startDate.getTime()
     );
+
     dateSelected.participants += booking.participants;
     dateSelected.soldOut = dateSelected.participants >= tour.maxGroupSize;
     booking.paymentStatus = 'Paid';
@@ -165,6 +184,102 @@ class BookingService {
       }
     ]);
     return stats;
+  }
+
+  async getMonthlyRevenue() {
+    const revenue = await Booking.aggregate([
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          totalRevenue: { $sum: '$amount' },
+          totalBooking: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          year: '$_id.year',
+          month: '$_id.month',
+          totalRevenue: 1,
+          totalBooking: 1
+        }
+      }
+    ]);
+    return revenue;
+  }
+
+  async getStatusRatio() {
+    const statusRatio = await Booking.aggregate([
+      {
+        $group: {
+          _id: '$paymentStatus',
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $addFields: {
+          status: '$_id'
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          status: 1,
+          count: 1
+        }
+      }
+    ]);
+    return statusRatio;
+  }
+
+  async getTopBooked(limit) {
+    const data = await Booking.aggregate([
+      {
+        $lookup: {
+          from: 'tours',
+          localField: 'tour',
+          foreignField: '_id',
+          as: 'tour'
+        }
+      },
+      {
+        $unwind: '$tour'
+      },
+      {
+        $group: {
+          _id: '$tour._id',
+          bookedCount: { $sum: 1 },
+          name: { $first: '$tour.name' },
+          price: { $first: '$tour.price' },
+          revenue: { $sum: '$amount' },
+          photo: { $first: '$tour.imageCover' }
+        }
+      },
+
+      {
+        $project: {
+          _id: 0,
+          tourId: '$_id',
+          tourName: '$name',
+          tourPrice: '$price',
+          bookedCount: 1,
+          revenue: 1,
+          photo: 1
+        }
+      },
+      {
+        $limit: limit
+      },
+      {
+        $sort: {
+          bookedCount: -1
+        }
+      }
+    ]);
+    return data;
   }
 }
 

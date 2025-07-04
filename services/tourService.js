@@ -194,7 +194,7 @@ $project	  Chọn/trả về các trường mong muốn *
 $limit	    Giới hạn số lượng kết quả *
 $skip	      Bỏ qua một số kết quả *
 
-$lookup	    JOIN bảng (tương tự populate)
+$lookup	    JOIN bảng (tương tự populate, MongoDB sẽ luôn trả về mảng dù chỉ có một bản ghi khớp)
 $unwind	    Tách mảng thành từng phần tử
 $addFields	Thêm hoặc chỉnh sửa trường
 */

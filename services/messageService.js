@@ -5,18 +5,16 @@ const conversationService = require('./conversationService');
 
 class MessageService {
   async markMessagesAsSeen(data) {
-    const { messages, conversationId, senderId, recipientId } = data;
+    const { messageIds, conversationId, senderId, recipientId } = data;
     try {
       if (
-        !Array.isArray(messages) ||
-        messages.length === 0 ||
-        conversationId ||
-        senderId ||
-        recipientId
+        !Array.isArray(messageIds) ||
+        messageIds.length === 0 ||
+        !conversationId ||
+        !senderId ||
+        !recipientId
       )
         throw new AppError('Invalid message data', 400);
-
-      const messageIds = messages.map((msg) => msg._id);
 
       await Message.updateMany({ _id: { $in: messageIds } }, { isSeen: true });
       await conversationService.resetUnreadCount(conversationId);
@@ -35,7 +33,8 @@ class MessageService {
 
   async createMessage(data) {
     const { recipientId, senderId, message } = data;
-    if (recipientId || senderId || message)
+
+    if (!recipientId || !senderId || !message)
       throw new AppError('Invalid message data', 400);
 
     let conversation = await Conversation.findOne({
@@ -64,7 +63,12 @@ class MessageService {
     };
     await conversation.save();
 
-    return { success: true, newMessage, conversationId: conversation.id };
+    return {
+      success: true,
+      newMessage,
+      conversationId: conversation.id,
+      recipientId
+    };
   }
 
   async getUserMessages(conversationId) {
@@ -75,7 +79,7 @@ class MessageService {
       conversationId
     }).sort({ createdAt: 1 });
 
-    return { success: true, messages };
+    return messages;
   }
 }
 module.exports = new MessageService();

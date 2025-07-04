@@ -75,7 +75,8 @@ class ErrorService {
       if (error.isOperational) {
         return res.status(error.statusCode).json({
           status: error.statusCode,
-          message: error.message
+          message: error.message,
+          statusCode: error?.statusCode || 500
         });
       }
 

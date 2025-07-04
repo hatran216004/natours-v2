@@ -88,9 +88,7 @@ exports.getMe = catchAsync(async (req, res, next) =>
 exports.updateMe = catchAsync(async (req, res, next) => {
   const filteredBody = filterObj(req.body, 'name', 'email');
   if (req.file) filteredBody.photo = req.file.fieldname;
-
   const user = await userService.updateCurrentUser(req.user.id, filteredBody);
-
   res.status(200).json({
     status: 'success',
     data: {

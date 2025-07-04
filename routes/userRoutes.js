@@ -20,7 +20,7 @@ router.get('/search/:key', userController.searchUsers);
 // -- Protect all routes after this middleware
 router.use(authMiddleware.authenticateJWT);
 
-router.patch('/update-my-password/', authController.updatePassword);
+router.patch('/update-my-password', authController.updatePassword);
 router.get('/me', userController.getMe);
 router.patch(
   '/update-me',

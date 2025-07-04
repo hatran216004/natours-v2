@@ -103,7 +103,6 @@ exports.authenticateJWT = catchAsync(async (req, res, next) => {
     if (err) {
       return next(err);
     }
-
     if (!user) {
       return next(
         new AppError(

@@ -9,7 +9,7 @@ router.use(authMiddleware.authenticateJWT);
 
 router.use('/:conversationId/messages', messageRouter);
 
-router.get('/', conversationController.getUserConversations);
+router.get('/me', conversationController.getUserConversations);
 
 router.route('/:id').delete(conversationController.deleteConversation);
 

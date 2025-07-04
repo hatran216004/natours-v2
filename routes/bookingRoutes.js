@@ -26,6 +26,23 @@ router.get(
   bookingController.getAllBookings
 );
 
+router.get(
+  '/status-ratio',
+  authMiddleware.checkPermission('manage_bookings'),
+  bookingController.getStatusRatio
+);
+router.get(
+  '/top-booked',
+  authMiddleware.checkPermission('manage_bookings'),
+  bookingController.getTopBooked
+);
+
+router.get(
+  '/monthly-revenue',
+  authMiddleware.checkPermission('manage_bookings'),
+  bookingController.getMonthlyRevenue
+);
+
 router
   .route('/:id')
   .get(bookingController.getBooking)
